@@ -369,6 +369,19 @@ input[type=range].rng::-moz-range-thumb { width:18px; height:18px; border-radius
   border-top:1px solid var(--line-soft); font-size:13px; color:var(--muted); }
 .sync-steps-cap.ok { color:var(--pos); font-weight:600; }
 .sync-steps-cap svg { color:var(--pos); flex:none; }
+
+/* ── Vergelijken-tabel ──
+ * NB: deze basisdefinities moeten VÓÓR de responsive @media-blokken staan. Media-
+ * queries verhogen de specificity niet, dus een latere basisregel zou de mobiele
+ * override (max-width:860px) weer terugdraaien naar de 4-koloms-desktoplayout. */
+.cmp-row { display:grid; grid-template-columns:200px 1fr 120px 120px; align-items:center; gap:18px; padding:14px 0; border-bottom:1px solid var(--line-soft); }
+.cmp-row > * { min-width:0; }
+.cmp-head { display:grid; grid-template-columns:200px 1fr 120px 120px; gap:18px; padding-bottom:10px; font-size:12px; font-weight:700; color:var(--muted); border-bottom:1px solid var(--line); }
+.cmp-name { font-weight:400; color:var(--ink); font-size:14px; }
+.cmp-amt { text-align:right; font-size:14px; }
+.cmp-sub { margin-top:7px; font-size:12.5px; }
+.cmp-total { border-bottom:0; padding-top:18px; }
+
 @media (max-width: 560px) {
   .sync-step-dot { width:32px; height:32px; }
   .sync-step-line { top:15px; }
@@ -665,15 +678,6 @@ input[type=range].rng::-moz-range-thumb { width:18px; height:18px; border-radius
 .switch.on { background:var(--blue); }
 .switch-knob { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .2s var(--ease); }
 .switch.on .switch-knob { transform:translateX(18px); }
-
-/* ── Vergelijken-tabel ── */
-.cmp-row { display:grid; grid-template-columns:200px 1fr 120px 120px; align-items:center; gap:18px; padding:14px 0; border-bottom:1px solid var(--line-soft); }
-.cmp-row > * { min-width:0; }
-.cmp-head { display:grid; grid-template-columns:200px 1fr 120px 120px; gap:18px; padding-bottom:10px; font-size:12px; font-weight:700; color:var(--muted); border-bottom:1px solid var(--line); }
-.cmp-name { font-weight:400; color:var(--ink); font-size:14px; }
-.cmp-amt { text-align:right; font-size:14px; }
-.cmp-sub { margin-top:7px; font-size:12.5px; }
-.cmp-total { border-bottom:0; padding-top:18px; }
 
 /* ── Profielformulier ── */
 .prof-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 18px; }
