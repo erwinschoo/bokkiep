@@ -6,6 +6,7 @@ import { useInstallState } from "../pwa/install";
 import { useAutoSyncStatus } from "../sync/autoSync";
 import { useKeepMeta } from "../db/keep";
 import { Ic } from "./Ic";
+import { initialsFrom } from "../lib/initials";
 import goatLogo from "../assets/ibex-orange.png";
 
 interface NavItem { id: ViewId; label: string; icon: string; tip: string }
@@ -37,19 +38,6 @@ const OVERIG: NavItem[] = [
 
 // Alfabetisch (NL) — defensief, zodat de lijsten gesorteerd blijven ongeacht de bronvolgorde.
 const byLabel = (a: NavItem, b: NavItem) => a.label.localeCompare(b.label, "nl");
-
-/* Initialen afgeleid van de account-naam (val terug op het e-mailadres). */
-function initialsFrom(name?: string, email?: string): string {
-  const n = (name ?? "").trim();
-  if (n) {
-    const parts = n.split(/\s+/);
-    const first = parts[0]?.[0] ?? "";
-    const last = parts.length > 1 ? (parts[parts.length - 1][0] ?? "") : "";
-    return (first + last).toUpperCase() || "?";
-  }
-  const local = (email ?? "").split("@")[0].replace(/[^a-zA-Z]/g, "");
-  return (local.slice(0, 2) || "?").toUpperCase();
-}
 
 /* "gesynct 14:32" (vandaag) of "gesynct 28 mei" (anders). */
 function syncedLabel(iso: string): string {

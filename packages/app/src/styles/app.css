@@ -248,6 +248,47 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 .safe-bottom { position:fixed; left:0; right:0; bottom:0; height:env(safe-area-inset-bottom);
   background:#000; z-index:70; pointer-events:none; }
 
+/* ── Mobiele chrome: per-scherm header + bottom-tab bar (alleen gerenderd ≤860px;
+   zie MobileHeader.tsx / MobileTabBar.tsx). Volledig op CSS-vars → light/dark gratis. ── */
+.m-header { position:sticky; top:0; z-index:20; background:var(--topbar-bg);
+  border-bottom:1px solid var(--topbar-line); padding:12px 16px 10px; }
+.m-header-row { display:flex; align-items:center; gap:10px; }
+.m-title { flex:1; min-width:0; margin:0; font-size:22px; font-weight:800; color:var(--ink); letter-spacing:-.025em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-iconbtn { flex:none; width:42px; height:42px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+  border-radius:12px; display:inline-flex; align-items:center; justify-content:center; }
+.m-iconbtn:hover { background:var(--subtle); }
+.m-avatar { flex:none; position:relative; width:42px; height:42px; border-radius:50%; border:0;
+  background:linear-gradient(140deg,var(--blue-mid),var(--blue)); color:#fff; font-weight:800; font-size:15px;
+  display:inline-flex; align-items:center; justify-content:center; overflow:hidden;
+  box-shadow:0 4px 12px rgba(94,129,181,.32); }
+.m-avatar-empty { background:var(--subtle); color:var(--muted); border:1px solid var(--line); box-shadow:none; }
+.m-avatar-photo { width:100%; height:100%; object-fit:cover; display:block; }
+.m-avatar-lock { position:absolute; right:-2px; bottom:-2px; width:18px; height:18px; border-radius:50%;
+  background:var(--warn); color:#fff; display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--topbar-bg); }
+.m-header-month { margin-top:10px; }
+.m-header-month .cat-select, .m-header-month .dd-trigger { width:100%; }
+.m-header-month .dd-trigger { justify-content:space-between; }
+
+.mtab { position:fixed; left:0; right:0; bottom:0; z-index:45; background:var(--surface);
+  border-top:1px solid var(--line); box-shadow:0 -3px 20px rgba(16,24,32,.06);
+  padding-bottom:calc(6px + env(safe-area-inset-bottom)); }
+.mtab-row { display:flex; align-items:flex-end; justify-content:space-around; height:60px; padding:0 6px; }
+.mtab-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding-top:6px;
+  border:0; background:transparent; min-height:48px; }
+.mtab-ic { position:relative; width:46px; height:30px; border-radius:15px; display:flex; align-items:center; justify-content:center;
+  color:var(--faint); transition:all .15s var(--ease); }
+.mtab-item.active .mtab-ic { background:var(--blue-soft); color:var(--blue); }
+.mtab-label { font-size:10.5px; font-weight:600; color:var(--faint); letter-spacing:.01em; }
+.mtab-item.active .mtab-label { font-weight:800; color:var(--blue); }
+.mtab-badge { position:absolute; top:-2px; right:4px; min-width:16px; height:16px; padding:0 4px; border-radius:99px;
+  background:var(--orange); color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--surface); }
+.mtab-fab { flex:0 0 auto; width:56px; height:56px; margin:-24px 4px 0; border-radius:20px; border:0;
+  background:linear-gradient(150deg,var(--blue-mid),var(--blue)); color:#fff;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 10px 22px rgba(94,129,181,.42); }
+
 /* generic button */
 .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
   font-size:13.5px; font-weight:700; padding:9px 15px; border-radius:10px; transition:all .15s var(--ease); }
@@ -559,15 +600,10 @@ input[type=range].rng::-moz-range-thumb { width:18px; height:18px; border-radius
   .topbar .btn .btn-label { display:none; }
   .topbar .btn { padding:9px 11px; }
 
-  /* maandselector onderaan vastgezet (opent opwaarts) */
-  .month-slot { display:flex; justify-content:center; position:fixed; left:0; right:0; bottom:0; z-index:45;
-    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
-    background:var(--topbar-bg); border-top:1px solid var(--line); }
-  .month-slot .cat-select { width:100%; max-width:420px; }
-  .month-slot .dd-trigger { width:100%; justify-content:center; }
-  .month-slot .cat-menu { top:auto; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); }
+  /* De maandselector zit op mobiel in de MobileHeader (zie .m-header-month), niet langer
+     in een vaste onderbalk — die plek is nu van de bottom-tab bar (.mtab). */
 
-  .content { padding:18px 16px 96px; }       /* ruimte onder de maandbalk */
+  .content { padding:18px 16px calc(84px + env(safe-area-inset-bottom)); }   /* ruimte onder de tab-bar */
 
   /* grids inklappen — benoemde classes i.p.v. fragiele [style*]-selectors */
   .grid-kpi { grid-template-columns:repeat(2,1fr) !important; }
@@ -592,7 +628,7 @@ input[type=range].rng::-moz-range-thumb { width:18px; height:18px; border-radius
 /* ── responsive: telefoon-tier ── */
 @media (max-width: 560px) {
   .topbar h1 { font-size:18px; }
-  .content { padding:14px 12px 96px; }
+  .content { padding:14px 12px calc(84px + env(safe-area-inset-bottom)); }
   .grid { gap:14px; }
 
   /* Overzicht: KPI-tiles vol breedte onder elkaar, intern heringedeeld */

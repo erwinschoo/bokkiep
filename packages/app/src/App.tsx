@@ -4,8 +4,11 @@ import { runStartupSync } from "./sync/autoSync";
 import { initOpenWithHandlers } from "./import/incoming";
 import { Sidebar } from "./components/Sidebar";
 import { PeriodPicker } from "./components/PeriodPicker";
+import { MobileHeader } from "./components/MobileHeader";
+import { MobileTabBar } from "./components/MobileTabBar";
 import { Ic } from "./components/Ic";
 import { Button } from "./components/Button";
+import { useMediaQuery } from "./charts/useMediaQuery";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { ForcePasswordReset } from "./components/ForcePasswordReset";
@@ -65,6 +68,7 @@ const VIEWS: Record<ViewId, ComponentType> = {
 
 export default function App() {
   const { ready, view, setView } = useApp();
+  const isMobile = useMediaQuery("(max-width: 860px)");
   const [confirm, setConfirm] = useState<null | "transacties" | "tegenpartijen">(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Met de herstelcode ontgrendeld (wachtwoord vergeten)? Toon — op elk scherm — direct een
@@ -107,32 +111,48 @@ export default function App() {
       <Sidebar open={drawerOpen} onNavigate={() => setDrawerOpen(false)} />
       {drawerOpen && <div className="drawer-scrim" onClick={() => setDrawerOpen(false)} />}
       <div className="main">
-        <header className="topbar">
-          <button className="topbar-burger" onClick={() => setDrawerOpen(true)} aria-label="Menu openen">
-            <Ic name="menu" size={22} />
-          </button>
-          <div className="topbar-title" onClick={() => setDrawerOpen(true)}>
-            <h1>{meta.title}</h1>
-          </div>
-          {(view === "transacties" || view === "tegenpartijen") && (
-            <Button style={{ marginLeft: 4 }} onClick={() => setConfirm(view)} title="Alle records permanent verwijderen" icon="trash">
-              <span className="btn-label">Alles wissen</span>
-            </Button>
-          )}
-          <div className="spacer"></div>
-          {meta.month && <div className="month-slot"><PeriodPicker /></div>}
-          {view !== "import" && view !== "steun" && view !== "download" && view !== "informatie" && view !== "feedback" && (
-            <Button variant="primary" onClick={() => setView("import")} title="Importeren" icon="upload">
-              <span className="btn-label">Importeren</span>
-            </Button>
-          )}
-        </header>
+        {isMobile ? (
+          <MobileHeader
+            title={meta.title}
+            showMonth={meta.month}
+            onMenu={() => setDrawerOpen(true)}
+            actions={(view === "transacties" || view === "tegenpartijen") ? (
+              <button className="m-iconbtn" onClick={() => setConfirm(view)} aria-label="Alles wissen"
+                title="Alle records permanent verwijderen">
+                <Ic name="trash" size={20} />
+              </button>
+            ) : null}
+          />
+        ) : (
+          <header className="topbar">
+            <button className="topbar-burger" onClick={() => setDrawerOpen(true)} aria-label="Menu openen">
+              <Ic name="menu" size={22} />
+            </button>
+            <div className="topbar-title" onClick={() => setDrawerOpen(true)}>
+              <h1>{meta.title}</h1>
+            </div>
+            {(view === "transacties" || view === "tegenpartijen") && (
+              <Button style={{ marginLeft: 4 }} onClick={() => setConfirm(view)} title="Alle records permanent verwijderen" icon="trash">
+                <span className="btn-label">Alles wissen</span>
+              </Button>
+            )}
+            <div className="spacer"></div>
+            {meta.month && <div className="month-slot"><PeriodPicker /></div>}
+            {view !== "import" && view !== "steun" && view !== "download" && view !== "informatie" && view !== "feedback" && (
+              <Button variant="primary" onClick={() => setView("import")} title="Importeren" icon="upload">
+                <span className="btn-label">Importeren</span>
+              </Button>
+            )}
+          </header>
+        )}
         <main className="content scroll" ref={contentRef}>
           <Suspense fallback={<div className="empty">Laden…</div>}>
             <ViewComp />
           </Suspense>
         </main>
       </div>
+
+      {isMobile && <MobileTabBar />}
 
       <ConfirmDialog
         open={confirm === "transacties"}

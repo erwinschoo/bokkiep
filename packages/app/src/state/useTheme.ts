@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { STATUS_BAR } from "../theme/chrome";
 
 export type Theme = "light" | "dark";
+export type ThemePref = "system" | "light" | "dark";
 
 const STORAGE_KEY = "bokkiep:theme";
 const LEGACY_KEY = "financeapp:theme"; // voorkeur van vóór de rebrand
@@ -9,13 +10,28 @@ const LEGACY_KEY = "financeapp:theme"; // voorkeur van vóór de rebrand
 // blauw in light mode, zwart in dark mode. De onderste navigatiebalk is altijd zwart
 // (zie de `.safe-bottom`-scrim in app.css), los van deze theme-color.
 
-function readStored(): Theme {
+function readStored(): ThemePref {
   try {
     const v = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY);
-    return v === "dark" ? "dark" : "light";
+    if (v === "dark" || v === "light" || v === "system") return v;
+    return "system";
   } catch {
-    return "light";
+    return "system";
   }
+}
+
+function systemPrefersDark(): boolean {
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/* Voorkeur → daadwerkelijk toegepast thema. "system" volgt het OS. */
+function resolve(pref: ThemePref): Theme {
+  if (pref === "system") return systemPrefersDark() ? "dark" : "light";
+  return pref;
 }
 
 function apply(theme: Theme) {
@@ -32,21 +48,44 @@ function apply(theme: Theme) {
   document.head.appendChild(meta);
 }
 
-/* Beheert de licht/donker-voorkeur: onthoudt in localStorage en zet data-theme op <html>.
- * CSS in app.css doet de rest globaal. Default is licht. */
+/* Beheert de thema-voorkeur (systeem/licht/donker): onthoudt in localStorage en zet
+ * data-theme op <html>. CSS in app.css doet de rest globaal. Default = systeem: het
+ * thema volgt prefers-color-scheme en wisselt live mee bij een OS-wissel, tenzij de
+ * gebruiker expliciet licht of donker kiest. */
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(readStored);
+  const [pref, setPrefState] = useState<ThemePref>(readStored);
+  const [theme, setThemeState] = useState<Theme>(() => resolve(readStored()));
 
-  // Houd het DOM-attribuut in sync (ook als de inline-script in index.html al iets zette).
-  useEffect(() => { apply(theme); }, [theme]);
+  // Houd het toegepaste thema + DOM-attribuut in sync met de voorkeur
+  // (ook als het inline-script in index.html al iets zette).
+  useEffect(() => {
+    const t = resolve(pref);
+    setThemeState(t);
+    apply(t);
+  }, [pref]);
 
-  const toggle = useCallback(() => {
-    setTheme((prev) => {
-      const next: Theme = prev === "dark" ? "light" : "dark";
-      try { localStorage.setItem(STORAGE_KEY, next); } catch { /* genegeerd */ }
-      return next;
-    });
+  // Bij 'systeem': volg live wijzigingen van het OS-thema.
+  useEffect(() => {
+    if (pref !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => {
+      const t: Theme = mq.matches ? "dark" : "light";
+      setThemeState(t);
+      apply(t);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [pref]);
+
+  const setPref = useCallback((next: ThemePref) => {
+    try { localStorage.setItem(STORAGE_KEY, next); } catch { /* genegeerd */ }
+    setPrefState(next);
   }, []);
 
-  return { theme, toggle };
+  // Backwards-compat: wissel tussen licht/donker als een expliciete voorkeur.
+  const toggle = useCallback(() => {
+    setPref(resolve(pref) === "dark" ? "light" : "dark");
+  }, [pref, setPref]);
+
+  return { theme, pref, setPref, toggle };
 }

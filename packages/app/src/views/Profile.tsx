@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { useProfile, saveProfile, DEFAULT_PROFILE } from "../state/profile";
-import { useTheme } from "../state/useTheme";
+import { useTheme, type ThemePref } from "../state/useTheme";
 import { Dropdown, type DropdownOption } from "../components/Dropdown";
 import { Ic } from "../components/Ic";
 import {
@@ -20,7 +20,7 @@ const INCOME_LABELS: Record<IncomeBand, string> = {
 export function Profile() {
   const { categories, hasImportedBalance, derivedStartBalance, startBalanceKnown, focusTarget } = useApp();
   const stored = useProfile();
-  const { theme, toggle } = useTheme();
+  const { pref, setPref } = useTheme();
 
   // Scroll/flits naar de beginsaldo-kaart wanneer de gebruiker via de banner hierheen komt.
   const balCardRef = useRef<HTMLDivElement>(null);
@@ -63,6 +63,11 @@ export function Profile() {
   const householdOpts: DropdownOption[] = [
     { value: "", label: `Automatisch (${matched.label})` },
     ...NIBUD_HOUSEHOLDS.map((h) => ({ value: h.id, label: h.label })),
+  ];
+  const themeOpts: DropdownOption[] = [
+    { value: "system", label: "Systeem" },
+    { value: "light", label: "Licht" },
+    { value: "dark", label: "Donker" },
   ];
 
   const expenseCats = categories.filter((c) => c.type === "uitgave").sort((a, b) => a.name.localeCompare(b.name, "nl"));
@@ -197,11 +202,9 @@ export function Profile() {
       <div className="card card-pad" style={{ marginBottom: 18 }}>
         <div className="card-h" style={{ marginBottom: 12 }}><h3>Weergave</h3></div>
         <div className="prof-map-row" style={{ borderBottom: 0 }}>
-          <span>Donkere modus</span>
-          <button className={"switch" + (theme === "dark" ? " on" : "")} role="switch" aria-checked={theme === "dark"}
-            aria-label="Donkere modus aan/uit" onClick={toggle}>
-            <span className="switch-knob" />
-          </button>
+          <span>Thema</span>
+          <Dropdown fullWidth ariaLabel="Thema" value={pref} options={themeOpts}
+            onChange={(v) => setPref(v as ThemePref)} />
         </div>
       </div>
 
