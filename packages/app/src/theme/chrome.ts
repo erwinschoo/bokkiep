@@ -12,4 +12,4 @@
  *
  * De onderste navigatiebalk is (nog) niet via de PWA te kleuren; dat volgt het systeemthema.
  */
-export const STATUS_BAR = { light: "#5E81B5", dark: "#000000" } as const;
+export const STATUS_BAR = { light: "#5E81B5", dark: "#12161D" } as const;

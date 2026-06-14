@@ -70,56 +70,56 @@
   --ease: cubic-bezier(.4,0,.2,1);
 }
 
-/* ── Dark mode — Teams-geïnspireerde neutralen, huisstijl-accenten behouden ── */
+/* ── Dark mode — donkerblauw palet uit het mobiele ontwerp, huisstijl-accenten behouden ── */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ink:        #F3F3F3;
-  --body:       #D4D6D9;
-  --muted:      #9AA0A8;
-  --faint:      #6B7178;
-  --line:       #3A3D42;
-  --line-soft:  #2E3136;
-  --bg:         #1F1F1F;
-  --subtle:     #262626;
-  --surface:    #2A2A2A;
+  --ink:        #F1F4F8;
+  --body:       #C3CAD4;
+  --muted:      #7E8896;
+  --faint:      #5C6573;
+  --line:       #2A323E;
+  --line-soft:  #232B36;
+  --bg:         #12161D;
+  --subtle:     #12161D;   /* scherm-/pagina-achtergrond */
+  --surface:    #1B212B;   /* kaarten */
 
-  --blue:       #7BA0D9;
+  --blue:       #7BA0D8;
   --blue-mid:   #6E92CC;
-  --blue-soft:  rgba(123,160,217,.16);
-  --blue-tint:  rgba(123,160,217,.10);
-  --orange:     #E58A53;
+  --blue-soft:  rgba(123,160,216,.16);
+  --blue-tint:  rgba(123,160,216,.10);
+  --orange:     #E89055;
   --orange-mid: #E08A52;
-  --orange-soft:rgba(229,138,83,.16);
-  --orange-tint:rgba(229,138,83,.10);
+  --orange-soft:rgba(232,144,85,.16);
+  --orange-tint:rgba(232,144,85,.10);
 
-  --pos:        #5FA68F;
-  --pos-soft:   rgba(95,166,143,.16);
-  --warn:       #D29A52;
-  --over:       #D7695C;
-  --over-soft:  rgba(215,105,92,.16);
+  --pos:        #5FB199;
+  --pos-soft:   rgba(95,177,153,.16);
+  --warn:       #DDA85C;
+  --over:       #E0726A;
+  --over-soft:  rgba(224,114,106,.16);
 
-  --elevated:   #333333;
-  --topbar-bg:  #1F1F1F;
+  --elevated:   #212934;   /* popovers/menu's — iets opgetild boven de kaart */
+  --topbar-bg:  #161B23;
   --topbar-line:var(--line);
-  --tip-bg:     #0F0F0F;
-  --tip-fg:     #F3F3F3;
-  --tip-muted:  #8A9099;
+  --tip-bg:     #0E1116;
+  --tip-fg:     #F1F4F8;
+  --tip-muted:  #7E8896;
   --overlay:    rgba(0,0,0,.6);
-  --scroll-thumb:#3A3D42;
+  --scroll-thumb:#2A323E;
 
   --shadow:    0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.35);
   --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
   --shadow-pop:0 8px 28px rgba(0,0,0,.45);
 }
 
-/* dark mode: scherm-/pagina-achtergrond volledig zwart over de hele scroll-hoogte
-   (alle layout-containers, niet alleen de eerste viewport). Kaarten en zijbalk blijven
-   grijze panelen voor contrast; subtiele oppervlakken/hovers blijven --subtle. */
+/* dark mode: scherm-/pagina-achtergrond (donkerblauw) over de hele scroll-hoogte —
+   alle layout-containers, niet alleen de eerste viewport. Kaarten/zijbalk blijven
+   --surface voor contrast. */
 :root[data-theme="dark"] html,
 :root[data-theme="dark"] body,
 :root[data-theme="dark"] .app,
 :root[data-theme="dark"] .main,
-:root[data-theme="dark"] .content { background:#000; }
+:root[data-theme="dark"] .content { background:var(--subtle); }
 
 * { box-sizing:border-box; }
 html, body { margin:0; padding:0; }
@@ -253,7 +253,6 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 /* Geen eigen balk: de header deelt de pagina-achtergrond, zodat titel + avatar los op
    het scherm zweven (zoals het ontwerp). Sticky, dus achtergrond moet de pagina dekken. */
 .m-header { position:sticky; top:0; z-index:20; background:var(--subtle); padding:14px 18px 6px; }
-:root[data-theme="dark"] .m-header { background:#000; }
 .m-header-row { display:flex; align-items:center; gap:10px; }
 .m-header-titles { flex:1; min-width:0; }
 .m-sub { font-size:13px; font-weight:600; color:var(--muted); }
@@ -292,6 +291,10 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 .mtab-fab { flex:0 0 auto; width:56px; height:56px; margin:-24px 4px 0; border-radius:20px; border:0;
   background:linear-gradient(150deg,var(--blue-mid),var(--blue)); color:#fff;
   display:flex; align-items:center; justify-content:center; box-shadow:0 10px 22px rgba(94,129,181,.42); }
+/* Dark: tab-bar iets donkerder dan de kaarten + oranje FAB (zoals het ontwerp). */
+:root[data-theme="dark"] .mtab { background:var(--topbar-bg); }
+:root[data-theme="dark"] .mtab-fab { background:linear-gradient(150deg,var(--orange-mid),var(--orange));
+  box-shadow:0 10px 22px rgba(217,111,52,.45); }
 
 /* ── Mobiel Overzicht (Fase 2) — kaart-georiënteerde layout, alleen ≤860px ── */
 /* Rondere hoeken + zachtere rand dan de desktop-kaart, conform het ontwerp (radius ~22). */
