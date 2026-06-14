@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { eur, eurSign, fmtDate } from "../lib/format";
+import { catTint } from "../lib/catColor";
 import { txInMonths, incomeOf, expensesOf, savingsOf, spendByCat, twelveMonthsEndingAt, monthKeysOfYear, runningTotal } from "../helpers/aggregations";
 import { budgetColor } from "../helpers/budgetColor";
 import { KpiCard } from "../components/KpiCard";
@@ -11,6 +12,7 @@ import { Button } from "../components/Button";
 import { TrendChart, type TrendSeries } from "../charts/TrendChart";
 import { DonutChart } from "../charts/DonutChart";
 import { ProgressRing } from "../charts/ProgressRing";
+import { MiniBars } from "../charts/MiniBars";
 import { useMediaQuery } from "../charts/useMediaQuery";
 
 export function Dashboard() {
@@ -22,6 +24,9 @@ export function Dashboard() {
   const [cumulative, setCumulative] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
   const isPhone = useMediaQuery("(max-width: 560px)");
+  // Zelfde grens als de mobiele shell (bottom-tabs): toon dan de kaart-georiënteerde
+  // Overzicht-layout i.p.v. het desktop-dashboard.
+  const isMobile = useMediaQuery("(max-width: 860px)");
 
   // Totalen over een set maand-keys (inkomsten/uitgaven/gespaard).
   const totalsOf = useCallback((keys: string[]) => {
@@ -144,8 +149,8 @@ export function Dashboard() {
   const recent = periodTxs.slice(0, 6);
   const goal = goals[0];
 
-  return (
-    <div className="content-inner fade-in">
+  const notices = (
+    <>
       {transactions.length === 0 && (
         <div className="notice" style={{ marginBottom: 18, background: "var(--blue-soft)", borderColor: "#CFE0F2" }}>
           <span className="ni" style={{ color: "var(--blue)" }}><Ic name="info" size={20} /></span>
@@ -164,6 +169,112 @@ export function Dashboard() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  // ── Mobiel (≤860px): kaart-georiënteerd Overzicht — saldo-hero, 3 stat-tegels,
+  // uitgaven-donut en een recente-transacties-peek. Budget/Sparen hebben eigen tabs. ──
+  if (isMobile) {
+    const tiles = [
+      { label: "Inkomsten", value: cur.income, color: "var(--pos)", icon: "arrowDown" },
+      { label: "Uitgaven", value: cur.expense, color: "var(--orange)", icon: "arrowUp" },
+      { label: "Gespaard", value: cur.saved, color: "var(--cat-4)", icon: "piggy" },
+    ];
+    return (
+      <div className="content-inner fade-in">
+        {notices}
+
+        {/* Saldo-hero */}
+        <div className="card m-hero">
+          <div className="m-hero-top">
+            <span className="m-hero-ic"><Ic name="wallet" size={17} /></span>
+            <span className="m-hero-lbl">Saldo betaalrekening</span>
+            <span className="m-hero-period">{periodLabel}</span>
+          </div>
+          <div className="m-hero-row">
+            <div className="m-hero-val tnum">{eur(balance)}</div>
+            <MiniBars data={last6((s) => Math.max(0, s.income - s.expense))} w={92} h={40} color="var(--blue)" />
+          </div>
+          {prevBalance != null && (
+            <div className="m-hero-foot">
+              <span className={"delta " + (balance >= prevBalance ? "up" : "down")}>
+                <Ic name={balance >= prevBalance ? "arrowUp" : "arrowDown"} size={12} />
+                {Math.abs(pct(balance, prevBalance)).toLocaleString("nl-NL", { maximumFractionDigits: 1 })}%
+              </span>
+              <span className="delta-note">{deltaNote}</span>
+            </div>
+          )}
+        </div>
+
+        {/* 3 stat-tegels */}
+        <div className="m-tiles">
+          {tiles.map((t) => (
+            <div className="card m-tile" key={t.label}>
+              <span className="m-tile-ic" style={{ background: catTint(t.color), color: t.color }}><Ic name={t.icon} size={15} /></span>
+              <div className="m-tile-lbl">{t.label}</div>
+              <div className="m-tile-val tnum">{eur(t.value)}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Uitgaven per categorie */}
+        <div className="card card-pad m-block">
+          <div className="card-h"><h3>Uitgaven per categorie</h3><span className="hint">{periodLabel}</span></div>
+          {donutData.length ? (
+            <div className="m-donut">
+              <div className="ring-wrap" style={{ flex: "none" }}>
+                <DonutChart data={donutData} size={120} thickness={18} active={donutActive} onHover={setDonutActive} />
+                <div className="ring-center">
+                  <div style={{ fontSize: 10.5, color: "var(--muted)", fontWeight: 700 }}>
+                    {donutActive != null ? donutData[donutActive].label : "Totaal"}
+                  </div>
+                  <div className="tnum" style={{ fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>
+                    {eur(donutActive != null ? donutData[donutActive].value : totalSpend)}
+                  </div>
+                </div>
+              </div>
+              <div className="m-legend">
+                {donutData.slice(0, 4).map((d, i) => (
+                  <div className="m-legend-row" key={d.id}
+                    onPointerEnter={() => setDonutActive(i)} onPointerLeave={() => setDonutActive(null)}>
+                    <span className="d" style={{ background: d.color }}></span>
+                    <span className="ln">{d.label}</span>
+                    <span className="lv tnum">{eur(d.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="empty" style={{ padding: "18px 0" }}>Nog geen uitgaven deze periode.</div>
+          )}
+        </div>
+
+        {/* Recente transacties */}
+        <div className="m-sec-h">
+          <h3>Recente transacties</h3>
+          <button className="lnk" onClick={() => setView("transacties")}>Alle</button>
+        </div>
+        {recent.length ? (
+          <div className="card m-rt">
+            {recent.slice(0, 4).map((t) => (
+              <div className="m-rt-row" key={t.id}>
+                <MerchantAv t={t} />
+                <div className="m-rt-main">
+                  <div className="m-rt-name">{t.merchant}</div>
+                  <div className="m-rt-cat">{catMap[t.category]?.name ?? "Niet ingedeeld"}</div>
+                </div>
+                <div className={"m-rt-amt tnum " + (t.amount >= 0 ? "pos" : "")}>{eurSign(t.amount, 2)}</div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="content-inner fade-in">
+      {notices}
       <div className="grid stagger grid-kpi" style={{ gridTemplateColumns: "repeat(4,1fr)", marginBottom: 18 }}>
         <KpiCard icon="wallet" iconColor="var(--blue)" iconBg="var(--blue-soft)" phone={isPhone}
           label="Saldo betaalrekening" value={eur(balance)} delta={prevBalance ? pct(balance, prevBalance) : null}
