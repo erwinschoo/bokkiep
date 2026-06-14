@@ -5,13 +5,28 @@ import { Ic } from "./Ic";
 import { PeriodPicker } from "./PeriodPicker";
 import { initialsFrom } from "../lib/initials";
 
-/* Mobiele per-scherm header: grote titel links, ronde avatar rechts (opent de drawer met
- * alle overige views). Op maand-schermen verschijnt de periode-kiezer eronder. Alleen
- * gerenderd op viewports ≤860px (zie App.tsx). */
+/* Tijdgebonden begroeting (subtitel mobiel Overzicht). */
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 6) return "Goedenacht";
+  if (h < 12) return "Goedemorgen";
+  if (h < 18) return "Goedemiddag";
+  return "Goedenavond";
+}
+function firstNameOf(name?: string): string {
+  return (name ?? "").trim().split(/\s+/)[0] ?? "";
+}
+
+/* Mobiele per-scherm header: optionele subtitel + grote titel links, ronde avatar rechts
+ * (opent de drawer met alle overige views). Zit zónder eigen achtergrond/rand op de
+ * pagina-achtergrond — net als het ontwerp (geen topbalk). Op nog-niet-heringerichte
+ * maand-schermen verschijnt de periode-kiezer eronder. Alleen gerenderd ≤860px (App.tsx). */
 export function MobileHeader({
-  title, showMonth, onMenu, actions,
+  title, sub, greet, showMonth, onMenu, actions,
 }: {
   title: string;
+  sub?: string;
+  greet?: boolean;
   showMonth: boolean;
   onMenu: () => void;
   actions?: ReactNode;
@@ -23,10 +38,16 @@ export function MobileHeader({
   const photo = connected ? photoMeta?.dataUrl : undefined;
   const locked = connected && syncState === "locked";
 
+  // Tijdgebonden begroeting + voornaam (indien bekend), zoals het ontwerp.
+  const subtitle = greet ? greeting() + (firstNameOf(acc?.name) ? `, ${firstNameOf(acc?.name)}` : "") : sub;
+
   return (
     <header className="m-header">
       <div className="m-header-row">
-        <h1 className="m-title">{title}</h1>
+        <div className="m-header-titles">
+          {subtitle && <div className="m-sub">{subtitle}</div>}
+          <h1 className="m-title">{title}</h1>
+        </div>
         {actions}
         <button type="button" className={"m-avatar" + (connected ? "" : " m-avatar-empty")} onClick={onMenu}
           aria-label={locked ? "Menu — vergrendeld" : "Menu openen"} title="Menu">

@@ -9,6 +9,7 @@ import { CatTag } from "../components/CatTag";
 import { MerchantAv } from "../components/MerchantAv";
 import { Ic } from "../components/Ic";
 import { Button } from "../components/Button";
+import { PeriodPicker } from "../components/PeriodPicker";
 import { TrendChart, type TrendSeries } from "../charts/TrendChart";
 import { DonutChart } from "../charts/DonutChart";
 import { ProgressRing } from "../charts/ProgressRing";
@@ -189,7 +190,7 @@ export function Dashboard() {
           <div className="m-hero-top">
             <span className="m-hero-ic"><Ic name="wallet" size={17} /></span>
             <span className="m-hero-lbl">Saldo betaalrekening</span>
-            <span className="m-hero-period">{periodLabel}</span>
+            <span className="m-hero-period"><PeriodPicker /></span>
           </div>
           <div className="m-hero-row">
             <div className="m-hero-val tnum">{eur(balance)}</div>

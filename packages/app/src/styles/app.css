@@ -250,10 +250,14 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 
 /* ── Mobiele chrome: per-scherm header + bottom-tab bar (alleen gerenderd ≤860px;
    zie MobileHeader.tsx / MobileTabBar.tsx). Volledig op CSS-vars → light/dark gratis. ── */
-.m-header { position:sticky; top:0; z-index:20; background:var(--topbar-bg);
-  border-bottom:1px solid var(--topbar-line); padding:12px 16px 10px; }
+/* Geen eigen balk: de header deelt de pagina-achtergrond, zodat titel + avatar los op
+   het scherm zweven (zoals het ontwerp). Sticky, dus achtergrond moet de pagina dekken. */
+.m-header { position:sticky; top:0; z-index:20; background:var(--subtle); padding:14px 18px 6px; }
+:root[data-theme="dark"] .m-header { background:#000; }
 .m-header-row { display:flex; align-items:center; gap:10px; }
-.m-title { flex:1; min-width:0; margin:0; font-size:22px; font-weight:800; color:var(--ink); letter-spacing:-.025em;
+.m-header-titles { flex:1; min-width:0; }
+.m-sub { font-size:13px; font-weight:600; color:var(--muted); }
+.m-title { margin:0; font-size:25px; font-weight:800; color:var(--ink); letter-spacing:-.025em;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .m-iconbtn { flex:none; width:42px; height:42px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
   border-radius:12px; display:inline-flex; align-items:center; justify-content:center; }
@@ -290,23 +294,36 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
   display:flex; align-items:center; justify-content:center; box-shadow:0 10px 22px rgba(94,129,181,.42); }
 
 /* ── Mobiel Overzicht (Fase 2) — kaart-georiënteerde layout, alleen ≤860px ── */
-.m-hero { padding:16px 18px; margin-bottom:13px; }
+/* Rondere hoeken + zachtere rand dan de desktop-kaart, conform het ontwerp (radius ~22). */
+.m-hero { padding:16px 18px; margin-bottom:13px; border-radius:22px; border-color:var(--line-soft); }
 .m-hero-top { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .m-hero-ic { width:30px; height:30px; border-radius:9px; background:var(--blue-soft); color:var(--blue);
   display:flex; align-items:center; justify-content:center; flex:none; }
 .m-hero-lbl { font-size:13px; font-weight:700; color:var(--muted); }
-.m-hero-period { margin-left:auto; font-size:12px; color:var(--faint); font-weight:700; }
+.m-hero-period { margin-left:auto; }
+/* periode-kiezer als kale, faint "mei 2026"-label (geen knop-uiterlijk) — zoals het ontwerp */
+.m-hero-period .period-picker .dd-trigger { border:0; background:transparent; padding:0; gap:3px;
+  color:var(--faint); font-weight:700; font-size:12px; }
+.m-hero-period .period-picker .dd-trigger > span:first-child > svg { display:none; }  /* kalender-icoon weg */
+.m-hero-period .period-picker .dd-trigger svg { width:14px; height:14px; color:var(--faint); }
+.m-hero-period .period-picker .dd-lbl { font-size:12px; }
 .m-hero-row { display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
 .m-hero-val { font-size:33px; font-weight:800; color:var(--ink); letter-spacing:-.03em; line-height:1; }
 .m-hero-foot { display:flex; align-items:center; gap:6px; margin-top:9px; font-size:12.5px; }
+/* delta als zacht gekleurd chip-pilletje (zoals het ontwerp) i.p.v. kale tekst */
+.m-hero-foot .delta { padding:2px 7px 2px 5px; border-radius:8px; }
+.m-hero-foot .delta.up { background:var(--pos-soft); }
+.m-hero-foot .delta.down { background:var(--over-soft); }
 
 .m-tiles { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:13px; }
-.m-tile { padding:12px 12px 13px; }
+.m-tile { padding:12px 12px 13px; border-radius:22px; border-color:var(--line-soft); }
 .m-tile-ic { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; margin-bottom:9px; }
 .m-tile-lbl { font-size:11px; font-weight:700; color:var(--muted); margin-bottom:2px; }
 .m-tile-val { font-size:16px; font-weight:800; color:var(--ink); letter-spacing:-.02em; }
 
-.m-block { margin-bottom:13px; }
+.m-block { margin-bottom:13px; border-radius:20px; border-color:var(--line-soft); }
+/* periode-label ("mei 2026") rechts naast de titel houden (niet wrappen zoals ≤560px doet) */
+.m-block .card-h .hint { width:auto; margin-left:auto; }
 .m-donut { display:flex; align-items:center; gap:16px; margin-top:6px; }
 .m-legend { flex:1; min-width:0; display:flex; flex-direction:column; gap:9px; }
 .m-legend-row { display:flex; align-items:center; gap:8px; }
@@ -319,7 +336,7 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 .m-sec-h h3 { font-size:15.5px; font-weight:800; color:var(--ink); margin:0; }
 .m-sec-h .lnk { margin-left:auto; text-decoration:none; }
 
-.m-rt { padding:2px 16px; }
+.m-rt { padding:2px 16px; border-radius:20px; border-color:var(--line-soft); }
 .m-rt-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line-soft); }
 .m-rt-row:last-child { border-bottom:0; }
 .m-rt-row .mi { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center;

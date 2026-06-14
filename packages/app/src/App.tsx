@@ -114,7 +114,8 @@ export default function App() {
         {isMobile ? (
           <MobileHeader
             title={meta.title}
-            showMonth={meta.month}
+            greet={view === "dashboard"}
+            showMonth={meta.month && view !== "dashboard"}
             onMenu={() => setDrawerOpen(true)}
             actions={(view === "transacties" || view === "tegenpartijen") ? (
               <button className="m-iconbtn" onClick={() => setConfirm(view)} aria-label="Alles wissen"
