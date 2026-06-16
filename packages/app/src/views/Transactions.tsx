@@ -9,13 +9,19 @@ import { Dropdown } from "../components/Dropdown";
 import { MerchantAv } from "../components/MerchantAv";
 import { Ic } from "../components/Ic";
 import { Button } from "../components/Button";
+import { SwipeRow } from "../components/SwipeRow";
+import { CategorySheet } from "../components/CategorySheet";
+import { useMediaQuery } from "../charts/useMediaQuery";
+import type { Transaction } from "../db/types";
 
 export function Transactions() {
-  const { transactions, categories } = useApp();
+  const { transactions, categories, catMap } = useApp();
+  const isMobile = useMediaQuery("(max-width: 860px)");
   const [q, setQ] = useState("");
   const [monthSel, setMonthSel] = useState<string>(""); // "" = nieuwste maand in data; "alle" = alles
   const [catFilter, setCatFilter] = useState("alle");
   const [onlyUncat, setOnlyUncat] = useState(false);
+  const [sheetTx, setSheetTx] = useState<Transaction | null>(null);
 
   // alleen maanden die echt in de database zitten (nieuwste eerst)
   const monthsInData = useMemo(
@@ -36,6 +42,76 @@ export function Transactions() {
   const uncatCount = transactions.filter((t) => !t.category && (selectedMonth === "alle" || txKey(t) === selectedMonth)).length;
   const totalOut = rows.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
   const totalIn = rows.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+
+  function categorize(t: Transaction, catId: string) {
+    assignPayeeCategory({ counterIban: t.counterIban, merchant: t.merchant }, catId);
+    setSheetTx(null);
+  }
+
+  // ── Mobiel: zoek + filter-chips + veegbare lijst (alle maanden, filter via chips) ──
+  if (isMobile) {
+    const uncatAll = transactions.filter((t) => !t.category).length;
+    const counts: Record<string, number> = {};
+    transactions.forEach((t) => { if (t.category) counts[t.category] = (counts[t.category] || 0) + 1; });
+    const chipCats = categories.filter((c) => counts[c.id]).sort((a, b) => counts[b.id] - counts[a.id]);
+
+    let mRows = transactions;
+    if (onlyUncat) mRows = mRows.filter((t) => !t.category);
+    else if (catFilter !== "alle") mRows = mRows.filter((t) => (catFilter === "leeg" ? !t.category : t.category === catFilter));
+    if (q.trim()) {
+      const s = q.toLowerCase();
+      mRows = mRows.filter((t) => t.merchant.toLowerCase().includes(s) || (t.note || "").toLowerCase().includes(s) || t.rawDescription.toLowerCase().includes(s));
+    }
+
+    const allActive = catFilter === "alle" && !onlyUncat;
+    const chip = (key: string, label: string, active: boolean, onClick: () => void, badge?: number) => (
+      <button key={key} type="button" className={"m-chip" + (active ? " active" : "")} onClick={onClick}>
+        {label}
+        {badge ? <span className="m-chip-badge">{badge}</span> : null}
+      </button>
+    );
+
+    return (
+      <div className="content-inner fade-in m-tx">
+        <div className="m-search">
+          <span className="m-search-ic"><Ic name="search" size={17} /></span>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Zoek op naam of notitie…" aria-label="Zoeken" />
+        </div>
+        <div className="m-chips scroll">
+          {chip("alle", "Alle", allActive, () => { setCatFilter("alle"); setOnlyUncat(false); })}
+          {chip("leeg", "Niet ingedeeld", onlyUncat, () => { setOnlyUncat(true); setCatFilter("alle"); }, uncatAll || undefined)}
+          {chipCats.map((c) => chip(c.id, c.name, !onlyUncat && catFilter === c.id, () => { setCatFilter(c.id); setOnlyUncat(false); }))}
+        </div>
+
+        <div className="card m-rt m-txlist">
+          {mRows.length === 0 && <div className="empty">Geen transacties gevonden.</div>}
+          {mRows.map((t) => {
+            const c = catMap[t.category];
+            return (
+              <SwipeRow key={t.id} actionLabel="Indelen" onAction={() => setSheetTx(t)}>
+                <div className={"m-tx-row" + (t.category ? "" : " uncat")}>
+                  <MerchantAv t={t} />
+                  <div className="m-tx-main">
+                    <div className="m-tx-name">{t.merchant}</div>
+                    <div className="m-tx-cat">{c ? c.name : "Veeg om in te delen"}</div>
+                  </div>
+                  <div className={"m-tx-amt tnum " + (t.amount >= 0 ? "pos" : "")}>{eurSign(t.amount, 2)}</div>
+                </div>
+              </SwipeRow>
+            );
+          })}
+        </div>
+
+        <CategorySheet
+          open={!!sheetTx}
+          title={sheetTx ? `Categorie voor ${sheetTx.merchant}` : ""}
+          current={sheetTx?.category}
+          onPick={(catId) => sheetTx && categorize(sheetTx, catId)}
+          onClose={() => setSheetTx(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="content-inner fade-in">

@@ -350,6 +350,53 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 .m-rt-amt { font-weight:800; font-size:14.5px; color:var(--ink); flex:none; white-space:nowrap; }
 .m-rt-amt.pos { color:var(--pos); }
 
+/* ── Mobiel Transacties (Fase 2) — zoek + filter-chips + veegbare lijst, alleen ≤860px ── */
+.m-search { position:relative; margin-bottom:11px; }
+.m-search-ic { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--faint); display:flex; }
+.m-search input { width:100%; border:1px solid var(--line); border-radius:13px; background:var(--surface);
+  padding:11px 12px 11px 38px; font-size:14px; color:var(--ink); outline:none; }
+.m-search input::placeholder { color:var(--faint); font-weight:600; }
+
+.m-chips { display:flex; gap:8px; overflow-x:auto; margin-bottom:13px; padding-bottom:2px; }
+.m-chips::-webkit-scrollbar { display:none; }
+.m-chip { flex:none; display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:11px;
+  border:1px solid var(--line); background:var(--surface); color:var(--body); font-size:13px; font-weight:700; white-space:nowrap; }
+.m-chip.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+.m-chip-badge { background:var(--orange-soft); color:var(--orange); border-radius:8px; padding:0 6px; font-size:11px; font-weight:800; }
+.m-chip.active .m-chip-badge { background:rgba(255,255,255,.25); color:#fff; }
+
+/* veegbare lijst: face schuift naar links en onthult de "Indelen"-actie eronder */
+.m-txlist { padding:0; overflow:hidden; }
+.swipe-row { position:relative; overflow:hidden; border-bottom:1px solid var(--line-soft); }
+.m-txlist .swipe-row:last-child { border-bottom:0; }
+.swipe-action { position:absolute; top:0; right:0; bottom:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:2px; border:0; background:var(--blue); color:#fff; font-size:11px; font-weight:800; }
+.swipe-face { position:relative; background:var(--surface); padding:11px 16px; touch-action:pan-y; cursor:pointer; }
+.swipe-face:has(.uncat) { background:var(--orange-tint); }
+.m-tx-row { display:flex; align-items:center; gap:12px; }
+.m-tx-row .mi { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:14px; flex:none; }
+.m-tx-main { flex:1; min-width:0; }
+.m-tx-name { font-weight:700; color:var(--ink); font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-tx-cat { font-size:12px; color:var(--muted); margin-top:1px; }
+.m-tx-row.uncat .m-tx-cat { color:var(--orange); font-weight:700; }
+.m-tx-amt { font-weight:800; font-size:14.5px; color:var(--ink); flex:none; white-space:nowrap; }
+.m-tx-amt.pos { color:var(--pos); }
+
+/* categorie-keuze als bottom-sheet */
+.sheet-overlay { position:fixed; inset:0; background:var(--overlay); z-index:100; display:flex; align-items:flex-end;
+  animation:fadeIn .16s var(--ease) both; }
+.sheet { width:100%; background:var(--surface); border-radius:22px 22px 0 0; box-shadow:var(--shadow-pop);
+  padding:10px 16px calc(16px + env(safe-area-inset-bottom)); max-height:76vh; display:flex; flex-direction:column;
+  animation:sheetUp .22s var(--ease) both; }
+@keyframes sheetUp { from { transform:translateY(100%); } to { transform:none; } }
+.sheet-grip { width:44px; height:5px; border-radius:3px; background:var(--line); margin:0 auto 12px; flex:none; }
+.sheet-h { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:800; color:var(--ink); margin-bottom:8px; padding:0 4px; }
+.sheet-x { margin-left:auto; border:0; background:transparent; color:var(--muted); width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center; border-radius:8px; flex:none; }
+.sheet-x:hover { background:var(--subtle); }
+.sheet-body { overflow-y:auto; }
+
 /* generic button */
 .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
   font-size:13.5px; font-weight:700; padding:9px 15px; border-radius:10px; transition:all .15s var(--ease); }
