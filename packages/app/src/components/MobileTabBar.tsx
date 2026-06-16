@@ -4,9 +4,10 @@ import { Ic } from "./Ic";
 interface Tab { id: ViewId; icon: string; label: string }
 
 // Vier tabs rond de verhoogde center-FAB (Importeren): twee links, twee rechts.
+// Transacties is bewust géén tab — die blijft bereikbaar via de drawer (avatar).
 const TABS: Tab[] = [
   { id: "dashboard", icon: "dashboard", label: "Overzicht" },
-  { id: "transacties", icon: "list", label: "Transacties" },
+  { id: "vergelijken", icon: "scale", label: "Vergelijken" },
   { id: "budgetten", icon: "sliders", label: "Budget" },
   { id: "spaardoel", icon: "target", label: "Sparen" },
 ];
@@ -15,7 +16,7 @@ const TABS: Tab[] = [
  * Alleen gerenderd op viewports ≤860px (zie App.tsx). Kleuren via CSS-vars → werkt
  * automatisch mee met light/dark. */
 export function MobileTabBar() {
-  const { view, setView, uncategorizedCount } = useApp();
+  const { view, setView } = useApp();
 
   const tab = (t: Tab) => {
     const on = view === t.id;
@@ -24,7 +25,6 @@ export function MobileTabBar() {
         aria-label={t.label} aria-current={on ? "page" : undefined}>
         <span className="mtab-ic">
           <Ic name={t.icon} size={22} strokeWidth={on ? 2.2 : 1.9} />
-          {t.id === "transacties" && uncategorizedCount ? <span className="mtab-badge">{uncategorizedCount}</span> : null}
         </span>
         <span className="mtab-label">{t.label}</span>
       </button>
