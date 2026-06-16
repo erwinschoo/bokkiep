@@ -203,7 +203,7 @@ export function Profile() {
         <div className="card-h" style={{ marginBottom: 12 }}><h3>Weergave</h3></div>
         <div className="prof-map-row" style={{ borderBottom: 0 }}>
           <span>Thema</span>
-          <Dropdown fullWidth ariaLabel="Thema" value={pref} options={themeOpts}
+          <Dropdown fullWidth floating align="right" ariaLabel="Thema" value={pref} options={themeOpts}
             onChange={(v) => setPref(v as ThemePref)} />
         </div>
       </div>

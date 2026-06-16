@@ -14,11 +14,14 @@ export function SwipeRow({ actionLabel, actionIcon = "check", onAction, children
   children: ReactNode;
 }) {
   const [x, setX] = useState(0);
-  const drag = useRef<{ id: number; sx: number; sy: number; startX: number; active: boolean; moved: boolean } | null>(null);
+  const drag = useRef<{ id: number; sx: number; sy: number; startX: number; active: boolean } | null>(null);
+  // Een veeg eindigt met een synthetische click op de face — die moeten we
+  // onderdrukken zodat de sheet niet ongewild opent na het vegen.
+  const suppressClick = useRef(false);
 
   function down(e: React.PointerEvent) {
     if (e.button != null && e.button !== 0) return;
-    drag.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, startX: x, active: false, moved: false };
+    drag.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, startX: x, active: false };
   }
   function move(e: React.PointerEvent) {
     const d = drag.current;
@@ -28,9 +31,9 @@ export function SwipeRow({ actionLabel, actionIcon = "check", onAction, children
       if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) return;
       if (Math.abs(dy) > Math.abs(dx)) { drag.current = null; return; } // verticaal → laat scrollen
       d.active = true;
+      suppressClick.current = true;
       (e.currentTarget as HTMLElement).setPointerCapture(d.id);
     }
-    d.moved = true;
     setX(Math.max(-ACTION_W, Math.min(0, d.startX + dx)));
   }
   function up(e: React.PointerEvent) {
@@ -40,7 +43,7 @@ export function SwipeRow({ actionLabel, actionIcon = "check", onAction, children
     drag.current = null;
   }
   function onClick() {
-    if (drag.current?.moved) return;     // einde van een veeg, geen tik
+    if (suppressClick.current) { suppressClick.current = false; return; } // einde van een veeg
     setX(0);
     onAction();
   }
