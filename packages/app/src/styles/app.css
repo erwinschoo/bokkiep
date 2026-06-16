@@ -270,9 +270,12 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 .m-avatar-lock { position:absolute; right:-2px; bottom:-2px; width:18px; height:18px; border-radius:50%;
   background:var(--warn); color:#fff; display:flex; align-items:center; justify-content:center;
   border:2px solid var(--topbar-bg); }
-.m-header-month { margin-top:10px; }
-.m-header-month .cat-select, .m-header-month .dd-trigger { width:100%; }
-.m-header-month .dd-trigger { justify-content:space-between; }
+/* periode-kiezer als subtitel ("Mei 2026") op maand-schermen — kale, klikbare label */
+.m-sub-period .period-picker .dd-trigger { border:0; background:transparent; padding:0; gap:3px;
+  color:var(--muted); font-weight:600; font-size:13px; }
+.m-sub-period .period-picker .dd-trigger > span:first-child > svg { display:none; }  /* kalender-icoon weg */
+.m-sub-period .period-picker .dd-trigger svg { width:14px; height:14px; color:var(--muted); }
+.m-sub-period .period-picker .dd-lbl { font-size:13px; }
 
 .mtab { position:fixed; left:0; right:0; bottom:0; z-index:45; background:var(--surface);
   border-top:1px solid var(--line); box-shadow:0 -3px 20px rgba(16,24,32,.06);
@@ -396,6 +399,35 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
   display:flex; align-items:center; justify-content:center; border-radius:8px; flex:none; }
 .sheet-x:hover { background:var(--subtle); }
 .sheet-body { overflow-y:auto; }
+
+/* ── Mobiel Budgetten (Fase 2) — "vrij te verdelen"-hero + voortgangsrijen ── */
+.m-bud-hero { padding:16px 18px; margin-bottom:13px; border-radius:22px; border-color:var(--line-soft);
+  background:linear-gradient(150deg,var(--blue-tint),var(--surface)); }
+.m-bud-free-lbl { font-size:13px; font-weight:700; color:var(--muted); margin-bottom:4px; }
+.m-bud-free { font-size:30px; font-weight:800; letter-spacing:-.03em; line-height:1; }
+.m-bud-stats { display:flex; gap:22px; margin-top:12px; }
+.m-bud-stat-lbl { font-size:11.5px; font-weight:700; color:var(--muted); }
+.m-bud-stat-val { font-size:15px; font-weight:800; color:var(--ink); margin-top:1px; }
+
+.m-bud-list { padding:2px 18px; border-radius:20px; border-color:var(--line-soft); }
+.m-bud-row { display:block; width:100%; text-align:left; border:0; background:transparent;
+  padding:13px 0; border-bottom:1px solid var(--line-soft); }
+.m-bud-list .m-bud-row:last-child { border-bottom:0; }
+.m-bud-row-top { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+.m-bud-dot { width:9px; height:9px; border-radius:3px; flex:none; }
+.m-bud-name { font-weight:700; color:var(--ink); font-size:14px; }
+.m-bud-fig { margin-left:auto; font-size:13px; color:var(--muted); font-weight:600; }
+.m-bud-fig b { color:var(--ink); }
+
+/* budget-edit sheet */
+.m-bud-lbl { display:block; font-size:12.5px; font-weight:700; color:var(--muted); margin:4px 0 8px; }
+.m-bud-input { display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:12px;
+  padding:12px 14px; background:var(--surface); }
+.m-bud-eur { font-size:18px; font-weight:800; color:var(--ink); }
+.m-bud-input input { flex:1; min-width:0; border:0; outline:none; background:transparent;
+  font-size:20px; font-weight:800; color:var(--ink); }
+.m-bud-hint { font-size:12.5px; color:var(--muted); margin-top:10px; }
+.m-bud-save { width:100%; justify-content:center; margin-top:16px; padding:13px; font-size:15px; border-radius:13px; }
 
 /* generic button */
 .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);

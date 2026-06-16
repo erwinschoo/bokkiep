@@ -45,7 +45,9 @@ export function MobileHeader({
     <header className="m-header">
       <div className="m-header-row">
         <div className="m-header-titles">
-          {subtitle && <div className="m-sub">{subtitle}</div>}
+          {showMonth
+            ? <div className="m-sub m-sub-period"><PeriodPicker /></div>
+            : subtitle && <div className="m-sub">{subtitle}</div>}
           <h1 className="m-title">{title}</h1>
         </div>
         {actions}
@@ -59,7 +61,6 @@ export function MobileHeader({
           {locked && <span className="m-avatar-lock"><Ic name="lock" size={11} /></span>}
         </button>
       </div>
-      {showMonth && <div className="m-header-month"><PeriodPicker /></div>}
     </header>
   );
 }

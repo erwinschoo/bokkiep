@@ -7,11 +7,15 @@ import { budgetColor } from "../helpers/budgetColor";
 import { postForCategory } from "../nibud/mapping";
 import { NIBUD_HOUSEHOLDS, matchHousehold, compositionFrom } from "../nibud/referenceData";
 import { setRecurringBudget } from "../db/repo";
+import { useMediaQuery } from "../charts/useMediaQuery";
+import { BudgetSheet } from "../components/BudgetSheet";
 import type { Category, CategoryGroupRow } from "../db/types";
 
 export function Budgets() {
   const { transactions, budgets, categories, categoryGroups, catMap, periodMode, periodMonthKeys, periodMonthCount, periodLabel } = useApp();
   const profile = useProfile();
+  const isMobile = useMediaQuery("(max-width: 860px)");
+  const [sheetCat, setSheetCat] = useState<Category | null>(null);
   const periodTxs = txInMonths(transactions, periodMonthKeys);
   const spend = spendByCat(periodTxs, catMap);
   const income = incomeOf(periodTxs, catMap);
@@ -52,6 +56,53 @@ export function Budgets() {
         </div>
         <div className="bar" style={{ height: 7 }}><span style={{ width: Math.min(100, r * 100) + "%", background: budgetColor(r) }}></span></div>
         <div className="tnum" style={{ textAlign: "right", fontSize: 13, color: "var(--muted)" }}><b style={{ color: "var(--ink)" }}>{eur(sp)}</b> / {eur(b)}</div>
+      </div>
+    );
+  }
+
+  // ── Mobiel: "vrij te verdelen"-hero + voortgangsrijen; tik een rij om het
+  //    maandbudget in een bottom-sheet te zetten (conform het ontwerp). ──
+  if (isMobile) {
+    const rows = leaves
+      .filter((c) => (budgets[c.id] || 0) > 0 || (spend[c.id] || 0) > 0)
+      .map((c) => ({ c, spent: spend[c.id] || 0, budget: (budgets[c.id] || 0) * n }))
+      .sort((a, b) => b.spent - a.spent);
+
+    return (
+      <div className="content-inner fade-in">
+        <div className="card m-bud-hero">
+          <div className="m-bud-free-lbl">{toAllocate >= 0 ? "Vrij te verdelen" : "Boven inkomen"}</div>
+          <div className="m-bud-free tnum" style={{ color: toAllocate >= 0 ? "var(--blue)" : "var(--over)" }}>{eurSign(toAllocate)}</div>
+          <div className="m-bud-stats">
+            <div><div className="m-bud-stat-lbl">Inkomen</div><div className="m-bud-stat-val tnum">{eur(income)}</div></div>
+            <div><div className="m-bud-stat-lbl">Gebudgetteerd</div><div className="m-bud-stat-val tnum">{eur(totalBudget)}</div></div>
+          </div>
+        </div>
+
+        <div className="card m-bud-list">
+          {rows.length === 0 && <div className="empty">Nog geen budgetten. Tik op een categorie om er een in te stellen.</div>}
+          {rows.map(({ c, spent, budget }) => {
+            const r = budget ? spent / budget : 0;
+            return (
+              <button key={c.id} type="button" className="m-bud-row" onClick={() => setSheetCat(c)}>
+                <div className="m-bud-row-top">
+                  <span className="m-bud-dot" style={{ background: c.color }} />
+                  <span className="m-bud-name">{c.name}</span>
+                  <span className="m-bud-fig tnum"><b>{eur(spent)}</b> / {budget ? eur(budget) : "—"}</span>
+                </div>
+                <div className="bar"><span style={{ width: Math.min(100, r * 100) + "%", background: budgetColor(r) }} /></div>
+              </button>
+            );
+          })}
+        </div>
+
+        <BudgetSheet
+          open={!!sheetCat}
+          cat={sheetCat}
+          monthly={sheetCat ? (budgets[sheetCat.id] || 0) : 0}
+          reference={sheetCat ? referenceFor(sheetCat.id) : null}
+          onClose={() => setSheetCat(null)}
+        />
       </div>
     );
   }
