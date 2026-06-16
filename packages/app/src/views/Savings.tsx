@@ -10,6 +10,7 @@ import { TrendChart, type TrendSeries } from "../charts/TrendChart";
 import { useMediaQuery } from "../charts/useMediaQuery";
 import { catTint } from "../lib/catColor";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { GoalSheet } from "../components/GoalSheet";
 import { Button } from "../components/Button";
 import { Tooltip } from "../components/Tooltip";
 import { Dropdown } from "../components/Dropdown";
@@ -104,8 +105,10 @@ function GoalRow({ group, row, idx, count }: { group: SavingsGroup; row: Savings
 export function Savings() {
   const { savingsGroups, savingsLibrary } = useApp();
   const isPhone = useMediaQuery("(max-width: 560px)");
+  const isMobile = useMediaQuery("(max-width: 860px)");
   const [selId, setSelId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<SavingsGroup | null>(null);
+  const [sheetGoalId, setSheetGoalId] = useState<string | null>(null);
 
   useEffect(() => {
     if (savingsGroups.length && (!selId || !savingsGroups.some((g) => g.categoryId === selId))) {
@@ -139,6 +142,109 @@ export function Savings() {
     { key: "doel", name: "Doel", color: "var(--orange)", data: proj.target, noArea: true, dashed: true },
     { key: "groei", name: "Groei", color: group.color, data: proj.data },
   ] : [];
+
+  // ── Mobiel: categorie-ribbon + actief-doel ring + prioriteitenlijst (ontwerp).
+  //    Doelen bewerken via GoalSheet; categorie-instellingen (inleg/startsaldo/
+  //    verwijderen) staan voorlopig alleen op desktop — zie BACKLOG.md. ──
+  if (isMobile) {
+    const sheetRow = sheetGoalId && group ? group.rows.find((r) => r.goal.id === sheetGoalId) : null;
+    const sheetIdx = sheetRow && group ? group.rows.indexOf(sheetRow) : -1;
+    return (
+      <div className="content-inner fade-in">
+        <div className="m-sav-ribbon scroll">
+          {savingsGroups.map((g) => {
+            const pct = g.totalTarget ? Math.min(100, Math.round((g.balance / g.totalTarget) * 100)) : 0;
+            const on = g.categoryId === selId;
+            return (
+              <button key={g.categoryId} type="button" className={"m-sav-chip" + (on ? " active" : "")}
+                onClick={() => setSelId(g.categoryId)}
+                style={on ? { borderColor: g.color, background: catTint(g.color) } : undefined}>
+                <div className="m-sav-chip-top">
+                  <CatIcon group={g} size={26} />
+                  <span className="m-sav-chip-name">{g.name}</span>
+                </div>
+                <div className="bar" style={{ height: 5 }}><span style={{ width: pct + "%", background: g.color }} /></div>
+              </button>
+            );
+          })}
+          <Dropdown
+            floating align="right" minWidth={210} menuHeader="Kies een categorie"
+            style={{ flex: "0 0 auto" }} disabled={savingsLibrary.length === 0}
+            ariaLabel="Spaarcategorie toevoegen" value=""
+            onChange={(id) => { addPotCategory(id); setSelId(id); }}
+            options={savingsLibrary.map((c) => ({ value: c.id, label: c.name, color: c.color }))}
+            trigger={() => (<span className="m-sav-add"><Ic name="plus" size={20} /></span>)}
+          />
+        </div>
+
+        {!group ? (
+          <div className="card card-pad"><div className="empty">Nog geen spaarcategorieën. Voeg er één toe.</div></div>
+        ) : (
+          <>
+            <div className="card m-sav-hero">
+              {group.allDone ? (
+                <div className="m-sav-done">
+                  <span className="m-sav-done-ic"><Ic name="check" size={34} /></span>
+                  <div className="m-sav-goal-name">Alle doelen gehaald!</div>
+                  <div className="m-sav-goal-sub">Voeg een nieuw doel toe om door te sparen.</div>
+                </div>
+              ) : active ? (
+                <>
+                  <div className="ring-wrap">
+                    <ProgressRing value={active.filled} max={active.goal.target} size={150} thickness={14} color={group.color} />
+                    <div className="ring-center">
+                      <div className="m-sav-ring-lbl">actief · {Math.round(active.pct * 100)}%</div>
+                      <div className="m-sav-ring-val tnum">{eur(active.filled)}</div>
+                      <div className="m-sav-ring-sub">van {eur(active.goal.target)}</div>
+                    </div>
+                  </div>
+                  <div className="m-sav-goal-name">{active.goal.name}</div>
+                  <div className="m-sav-goal-sub">Nog {eur(Math.max(0, active.goal.target - active.filled))} · {eur(group.monthly)}/mnd</div>
+                </>
+              ) : (
+                <div className="empty">Nog geen doel in deze categorie.</div>
+              )}
+            </div>
+
+            <div className="m-sec-h"><h3>Doelen op prioriteit</h3></div>
+            <div className="card m-sav-list">
+              {group.rows.map((row, i) => {
+                const activeRow = !row.done && i === group.activeIdx;
+                return (
+                  <button key={row.goal.id} type="button" className="m-sav-goal-row" onClick={() => setSheetGoalId(row.goal.id)}>
+                    <span className={"m-sav-badge" + (row.done ? " done" : activeRow ? " active" : "")}
+                      style={activeRow ? { background: group.color } : undefined}>
+                      {row.done ? <Ic name="check" size={16} /> : i + 1}
+                    </span>
+                    <div className="m-sav-goal-main">
+                      <div className="m-sav-goal-rowname">{row.goal.name}</div>
+                      <div className="bar" style={{ height: 5, marginTop: 6 }}>
+                        <span style={{ width: Math.round(row.pct * 100) + "%", background: row.done ? "var(--pos)" : group.color }} />
+                      </div>
+                    </div>
+                    <span className="m-sav-goal-pct tnum">{Math.round(row.pct * 100)}%</span>
+                  </button>
+                );
+              })}
+              <button type="button" className="btn m-sav-addgoal" onClick={() => addGoalToCategory(group.categoryId)}>
+                <Ic name="plus" size={16} /> Doel toevoegen
+              </button>
+            </div>
+          </>
+        )}
+
+        <GoalSheet
+          open={!!sheetRow}
+          goalId={sheetRow ? sheetRow.goal.id : null}
+          name={sheetRow ? sheetRow.goal.name : ""}
+          target={sheetRow ? sheetRow.goal.target : 0}
+          canUp={sheetIdx > 0}
+          canDown={!!group && sheetIdx >= 0 && sheetIdx < group.rows.length - 1}
+          onClose={() => setSheetGoalId(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="content-inner fade-in">

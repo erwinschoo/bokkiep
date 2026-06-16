@@ -67,7 +67,7 @@ const VIEWS: Record<ViewId, ComponentType> = {
 };
 
 export default function App() {
-  const { ready, view, setView, transactions } = useApp();
+  const { ready, view, setView, transactions, savingsGroups } = useApp();
   const isMobile = useMediaQuery("(max-width: 860px)");
   const [confirm, setConfirm] = useState<null | "transacties" | "tegenpartijen">(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -115,7 +115,11 @@ export default function App() {
           <MobileHeader
             title={meta.title}
             greet={view === "dashboard"}
-            sub={view === "transacties" ? `${transactions.length} transacties` : undefined}
+            sub={
+              view === "transacties" ? `${transactions.length} transacties`
+                : view === "spaardoel" ? `${savingsGroups.length} categorie${savingsGroups.length === 1 ? "" : "ën"}`
+                : undefined
+            }
             showMonth={meta.month && view !== "dashboard"}
             onMenu={() => setDrawerOpen(true)}
             actions={(view === "transacties" || view === "tegenpartijen") ? (

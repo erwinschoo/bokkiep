@@ -429,6 +429,47 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 .m-bud-hint { font-size:12.5px; color:var(--muted); margin-top:10px; }
 .m-bud-save { width:100%; justify-content:center; margin-top:16px; padding:13px; font-size:15px; border-radius:13px; }
 
+/* ── Mobiel Spaardoelen (Fase 2) — ribbon + actief-doel ring + prioriteitenlijst ── */
+.m-sav-ribbon { display:flex; gap:9px; overflow-x:auto; margin-bottom:13px; padding-bottom:2px; align-items:stretch; }
+.m-sav-ribbon::-webkit-scrollbar { display:none; }
+.m-sav-chip { flex:0 0 auto; min-width:128px; text-align:left; border:1px solid var(--line); background:var(--surface);
+  border-radius:14px; padding:10px 14px; }
+.m-sav-chip-top { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.m-sav-chip-name { font-weight:800; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-sav-add { display:flex; align-items:center; justify-content:center; width:52px; height:100%; min-height:60px;
+  border:1.5px dashed var(--line); border-radius:14px; background:var(--bg); color:var(--blue); }
+
+.m-sav-hero { display:flex; flex-direction:column; align-items:center; text-align:center; padding:18px 18px 16px;
+  margin-bottom:13px; border-radius:22px; border-color:var(--line-soft); }
+.m-sav-ring-lbl { font-size:11px; color:var(--muted); font-weight:700; }
+.m-sav-ring-val { font-size:23px; font-weight:800; color:var(--ink); letter-spacing:-.02em; line-height:1.2; }
+.m-sav-ring-sub { font-size:11.5px; color:var(--muted); }
+.m-sav-goal-name { font-weight:800; color:var(--ink); font-size:16px; margin-top:12px; }
+.m-sav-goal-sub { font-size:12.5px; color:var(--muted); margin-top:2px; }
+.m-sav-done { padding:20px 0 8px; }
+.m-sav-done-ic { width:78px; height:78px; border-radius:50%; background:var(--pos-soft); color:var(--pos);
+  display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+
+.m-sav-list { padding:4px 16px; border-radius:20px; border-color:var(--line-soft); }
+.m-sav-goal-row { display:flex; align-items:center; gap:12px; width:100%; text-align:left; border:0; background:transparent;
+  padding:12px 0; border-bottom:1px solid var(--line-soft); }
+.m-sav-goal-row:last-of-type { border-bottom:0; }
+.m-sav-badge { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:13px; flex:none; background:var(--subtle); color:var(--muted); }
+.m-sav-badge.active { color:#fff; }
+.m-sav-badge.done { background:var(--pos-soft); color:var(--pos); }
+.m-sav-goal-main { flex:1; min-width:0; }
+.m-sav-goal-rowname { font-weight:700; color:var(--ink); font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-sav-goal-pct { font-size:12px; color:var(--muted); font-weight:700; flex:none; }
+.m-sav-addgoal { width:100%; justify-content:center; margin:8px 0 4px; border-style:dashed; color:var(--blue); }
+
+/* doel-edit sheet */
+.m-goal-reorder { display:flex; gap:8px; margin-top:16px; }
+.m-goal-reorder .btn { flex:1; justify-content:center; }
+.m-goal-actions { display:flex; gap:8px; margin-top:10px; }
+.m-goal-del { color:var(--over); border-color:var(--line); }
+.m-goal-save { flex:1; justify-content:center; }
+
 /* generic button */
 .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
   font-size:13.5px; font-weight:700; padding:9px 15px; border-radius:10px; transition:all .15s var(--ease); }
