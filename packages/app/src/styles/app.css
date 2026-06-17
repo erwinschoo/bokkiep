@@ -470,6 +470,109 @@ input, textarea, select { font-family:inherit; color:var(--ink); }
 .m-goal-del { color:var(--over); border-color:var(--line); }
 .m-goal-save { flex:1; justify-content:center; }
 
+/* ── Gedeelde mobiele bouwstenen (Tegenpartijen + Beheer) ── */
+.mono { font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace; letter-spacing:-.02em; }
+
+/* full-width segmented control (sheets + Beheer-tabs) */
+.seg.seg-full { display:flex; width:100%; }
+.seg.seg-full button { flex:1; min-width:0; padding:9px 4px; font-size:12.5px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+
+/* sorteer-knop (chip-rij rechts) */
+.m-sortbtn { display:inline-flex; align-items:center; gap:3px; color:var(--muted); font-size:13px; font-weight:800; padding:7px 4px; white-space:nowrap; }
+
+/* sub-titel + info-banner + CTA in bottom-sheets */
+.m-sheet-sub { font-size:13px; font-weight:600; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sheet-h > div:first-child { min-width:0; }
+.m-info-banner { display:flex; align-items:flex-start; gap:9px; background:var(--blue-tint); border:1px solid var(--blue-soft);
+  border-radius:13px; padding:10px 12px; margin:4px 0 14px; font-size:12.5px; line-height:1.4; color:var(--body); }
+.m-info-banner svg { color:var(--blue); flex:none; margin-top:1px; }
+.m-info-banner b { color:var(--ink); }
+.m-info-banner.standalone { margin:0 0 12px; }
+.m-sheet-cta { width:100%; justify-content:center; margin-top:16px; padding:14px; font-size:15px; }
+.m-sheet-del { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; margin-top:12px;
+  border:0; background:transparent; color:var(--over); font-weight:800; font-size:13.5px; padding:4px; }
+
+/* sheet-velden */
+.m-field { margin-bottom:14px; }
+.m-select { position:relative; display:flex; align-items:center; }
+.m-select select { width:100%; appearance:none; -webkit-appearance:none; border:1px solid var(--line); border-radius:12px;
+  background:var(--subtle); color:var(--ink); font-size:15px; font-weight:700; padding:12px 38px 12px 14px; outline:none; }
+.m-select svg { position:absolute; right:13px; color:var(--muted); pointer-events:none; }
+
+/* prioriteit-stepper */
+.m-stepper { display:flex; align-items:center; gap:12px; }
+.m-stepper button { width:40px; height:40px; flex:none; border:1px solid var(--line); border-radius:11px; background:var(--subtle);
+  color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; }
+.m-stepper > span.tnum { font-size:18px; font-weight:800; color:var(--ink); min-width:20px; text-align:center; }
+.m-stepper-hint { font-size:12px; color:var(--muted); font-weight:600; }
+
+/* dashed "nieuwe …"-knop */
+.m-add-dash { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; margin:2px 0 14px;
+  border:1.5px dashed var(--line); border-radius:14px; padding:13px; background:transparent; color:var(--blue); font-weight:800; font-size:14px; }
+.m-add-dash:hover { background:var(--blue-tint); }
+
+/* ── Tegenpartijen (mobiel) ── */
+.m-tp-nudge { display:flex; align-items:center; gap:11px; background:var(--orange-tint); border:1px solid var(--orange-soft);
+  border-radius:16px; padding:12px 14px; margin-bottom:11px; }
+.m-tp-nudge-ic { width:32px; height:32px; border-radius:10px; background:var(--orange-soft); color:var(--orange);
+  display:flex; align-items:center; justify-content:center; flex:none; }
+.m-tp-nudge-txt .t { font-size:13.5px; font-weight:800; color:var(--ink); }
+.m-tp-nudge-txt .s { font-size:12px; color:var(--body); margin-top:1px; }
+
+.m-tp-list { padding:0 16px; overflow:hidden; }
+.m-tp-list .swipe-row { border-bottom:1px solid var(--line-soft); }
+.m-tp-list .swipe-row:last-child { border-bottom:0; }
+.m-tp-row { display:flex; align-items:center; gap:12px; padding:12px 0; }
+.m-tp-av { width:40px; height:40px; border-radius:12px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; }
+.m-tp-main { flex:1; min-width:0; }
+.m-tp-name { font-weight:700; color:var(--ink); font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-tp-sub { font-size:11.5px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-tp-pin { font-style:italic; }
+.m-tp-count { color:var(--faint); }
+.m-tp-right { flex:none; text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+.m-tp-amt { font-weight:800; font-size:14.5px; color:var(--ink); white-space:nowrap; }
+.m-tp-amt.pos { color:var(--pos); }
+.m-tp-badge { display:inline-flex; align-items:center; gap:5px; border-radius:8px; padding:2px 8px; font-size:11px; font-weight:700; white-space:nowrap; }
+.m-tp-badge.uncat { background:var(--orange-soft); color:var(--orange); font-weight:800; }
+.m-tp-catdot { width:7px; height:7px; border-radius:2px; flex:none; }
+
+/* ── Beheer · Categorieën (mobiel) ── */
+.m-cat-group { margin-bottom:14px; border:1px solid transparent; border-radius:14px; transition:border-color .12s var(--ease), background .12s var(--ease); }
+.m-cat-group.drag-over { border-color:var(--blue); background:var(--blue-tint); }
+.m-cat-group-h { display:flex; align-items:center; gap:8px; padding:0 4px 8px; }
+.m-cat-group-name { font-size:15px; font-weight:800; color:var(--ink); }
+.m-cat-group-count { background:var(--subtle); color:var(--muted); border-radius:99px; padding:1px 8px; font-size:11.5px; font-weight:800; }
+.m-cat-gbtn { width:30px; height:30px; flex:none; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--muted);
+  display:flex; align-items:center; justify-content:center; }
+.m-cat-gbtn:first-of-type { margin-left:auto; }
+.m-cat-gbtn.blue { color:var(--blue); }
+.m-cat-card { padding:0 14px; }
+.m-cat-empty { font-size:12.5px; color:var(--muted); padding:14px 2px; text-align:center; }
+.m-cat-row { display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line-soft); }
+.m-cat-card .m-cat-row:last-child { border-bottom:0; }
+.m-cat-row.dragging { outline:2px solid var(--orange); outline-offset:-2px; background:var(--orange-tint); border-radius:8px; }
+.m-cat-grip { color:var(--faint); flex:none; display:flex; padding:12px 0; touch-action:none; cursor:grab; }
+.m-cat-rowbtn { flex:1; min-width:0; display:flex; align-items:center; gap:10px; padding:12px 0; border:0; background:transparent; text-align:left; }
+.m-cat-dot { width:11px; height:11px; border-radius:3px; flex:none; }
+.m-cat-name { flex:1; min-width:0; font-weight:700; color:var(--ink); font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-cat-type { background:var(--subtle); color:var(--muted); border-radius:7px; padding:2px 8px; font-size:11px; font-weight:800; flex:none; }
+.m-cat-count { font-size:12px; color:var(--faint); font-weight:700; flex:none; min-width:26px; text-align:right; }
+
+/* ── Beheer · Regels (mobiel) ── */
+.m-rule-card { padding:0 14px; margin-bottom:2px; }
+.m-rule-row { display:flex; align-items:center; gap:11px; width:100%; padding:13px 2px; border:0; background:transparent; text-align:left;
+  border-bottom:1px solid var(--line-soft); }
+.m-rule-card .m-rule-row:last-child { border-bottom:0; }
+.m-rule-prio { width:26px; height:26px; flex:none; border-radius:8px; background:var(--blue-soft); color:var(--blue);
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12.5px; }
+.m-rule-main { flex:1; min-width:0; }
+.m-rule-pat { display:block; font-weight:700; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-rule-sub { display:flex; align-items:center; gap:6px; margin-top:4px; font-size:11.5px; color:var(--muted); font-weight:600; }
+.m-rule-arrow { color:var(--faint); }
+.m-rule-cat { display:inline-flex; align-items:center; gap:4px; border-radius:7px; padding:1px 7px 1px 6px; font-weight:700; }
+.m-rule-catdot { width:6px; height:6px; border-radius:2px; flex:none; }
+.m-rule-edit { color:var(--faint); flex:none; display:flex; }
+
 /* generic button */
 .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
   font-size:13.5px; font-weight:700; padding:9px 15px; border-radius:10px; transition:all .15s var(--ease); }

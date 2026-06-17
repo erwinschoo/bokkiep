@@ -1,19 +1,26 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { eurSign, fmtDate } from "../lib/format";
-import { buildPayeeOverview } from "../helpers/payees";
+import { buildPayeeOverview, type PayeeOverview } from "../helpers/payees";
 import { catTint } from "../lib/catColor";
 import { assignPayeeCategory } from "../db/repo";
 import { CatSelect } from "../components/CatSelect";
+import { Dropdown } from "../components/Dropdown";
+import { SwipeRow } from "../components/SwipeRow";
+import { PayeeSheet } from "../components/PayeeSheet";
+import { useMediaQuery } from "../charts/useMediaQuery";
 import { Ic } from "../components/Ic";
 
 type SortKey = "count" | "amount" | "name";
+const SORT_LABEL: Record<SortKey, string> = { count: "Aantal", amount: "Bedrag", name: "Naam" };
 
 export function Payees() {
   const { transactions, payeeMap, catMap } = useApp();
+  const isMobile = useMediaQuery("(max-width: 860px)");
   const [q, setQ] = useState("");
   const [onlyUncat, setOnlyUncat] = useState(false);
   const [sort, setSort] = useState<SortKey>("count");
+  const [sheetPayee, setSheetPayee] = useState<PayeeOverview | null>(null);
 
   const overview = useMemo(() => buildPayeeOverview(transactions, payeeMap), [transactions, payeeMap]);
 
@@ -30,6 +37,77 @@ export function Payees() {
   });
 
   const uncatCount = overview.filter((p) => !p.categoryId).length;
+
+  // ── Mobiel: zoek + chips + sorteer + nudge + veegbare kaartlijst (toewijzen via PayeeSheet) ──
+  if (isMobile) {
+    return (
+      <div className="content-inner fade-in">
+        <div className="m-search">
+          <span className="m-search-ic"><Ic name="search" size={17} /></span>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Zoek op naam of IBAN…" aria-label="Zoeken" />
+        </div>
+        <div className="m-chips" style={{ marginBottom: 11 }}>
+          <button type="button" className={"m-chip" + (!onlyUncat ? " active" : "")} onClick={() => setOnlyUncat(false)}>Alle</button>
+          <button type="button" className={"m-chip" + (onlyUncat ? " active" : "")} onClick={() => setOnlyUncat(true)}>
+            Zonder categorie{uncatCount ? <span className="m-chip-badge">{uncatCount}</span> : null}
+          </button>
+          <Dropdown
+            floating align="right" minWidth={150} menuHeader="Sorteer op"
+            style={{ marginLeft: "auto", flex: "none" }} ariaLabel="Sorteren"
+            value={sort} onChange={(v) => setSort(v as SortKey)}
+            options={[{ value: "count", label: "Aantal" }, { value: "amount", label: "Bedrag" }, { value: "name", label: "Naam" }]}
+            trigger={() => (
+              <span className="m-sortbtn">{SORT_LABEL[sort]} <Ic name="chevronDown" size={15} /></span>
+            )}
+          />
+        </div>
+
+        {uncatCount > 0 && (
+          <div className="m-tp-nudge">
+            <span className="m-tp-nudge-ic"><Ic name="sparkle" size={17} /></span>
+            <div className="m-tp-nudge-txt">
+              <div className="t">{uncatCount} tegenpartij{uncatCount === 1 ? "" : "en"} nog niet ingedeeld</div>
+              <div className="s">Deel ze in — hun transacties krijgen dan automatisch een categorie.</div>
+            </div>
+          </div>
+        )}
+
+        <div className="card m-tp-list">
+          {rows.length === 0 && <div className="empty">Geen tegenpartijen gevonden.</div>}
+          {rows.map((p) => {
+            const c = catMap[p.categoryId];
+            const uncat = !p.categoryId;
+            return (
+              <SwipeRow key={p.key} actionLabel="Indelen" actionIcon="tag" onAction={() => setSheetPayee(p)}>
+                <div className={"m-tp-row" + (uncat ? " uncat" : "")}>
+                  <span className="m-tp-av" style={{ background: c ? catTint(c.color) : "var(--subtle)", color: c ? c.color : "var(--muted)" }}>
+                    {(p.name[0] || "?").toUpperCase()}
+                  </span>
+                  <div className="m-tp-main">
+                    <div className="m-tp-name">{p.name}</div>
+                    <div className="m-tp-sub">
+                      {p.iban ? <span className="mono">{p.iban}</span> : <span className="m-tp-pin">Pinbetaling — geen IBAN</span>}
+                      <span className="m-tp-count"> · {p.count}×</span>
+                    </div>
+                  </div>
+                  <div className="m-tp-right">
+                    <div className={"m-tp-amt tnum" + (p.total >= 0 ? " pos" : "")}>{eurSign(p.total, 0)}</div>
+                    {uncat
+                      ? <span className="m-tp-badge uncat">Niet ingedeeld</span>
+                      : <span className="m-tp-badge" style={{ background: c ? catTint(c.color) : "var(--subtle)", color: c ? c.color : "var(--muted)" }}>
+                          <span className="m-tp-catdot" style={{ background: c ? c.color : "var(--muted)" }} />{c ? c.name : "—"}
+                        </span>}
+                  </div>
+                </div>
+              </SwipeRow>
+            );
+          })}
+        </div>
+
+        <PayeeSheet open={!!sheetPayee} payee={sheetPayee} onClose={() => setSheetPayee(null)} />
+      </div>
+    );
+  }
 
   return (
     <div className="content-inner fade-in">

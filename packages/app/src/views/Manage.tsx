@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useApp } from "../state/AppContext";
 import {
   addCategory, updateCategory, deleteCategory,
@@ -9,22 +10,33 @@ import { Ic } from "../components/Ic";
 import { Button } from "../components/Button";
 import { Tooltip } from "../components/Tooltip";
 import { Dropdown } from "../components/Dropdown";
+import { ColorPicker } from "../components/ColorPicker";
+import { CatEditSheet } from "../components/CatEditSheet";
+import { RuleEditSheet } from "../components/RuleEditSheet";
+import { CAT_COLORS as COLORS, TYPE_LABEL, FIELD_LABEL, MATCH_LABEL } from "../lib/catMeta";
+import { useMediaQuery } from "../charts/useMediaQuery";
+import { catTint } from "../lib/catColor";
 import { usePointerDragMove } from "../charts/usePointerDragMove";
 import type { Category, CategoryGroupRow, CategoryType, RuleRow } from "../db/types";
-
-/* Suggesties die "luisteren" met de rest: afgeleid van de huisstijl-tokens
- * (passen automatisch mee in dark mode). Daarnaast kan de gebruiker een
- * eigen kleur kiezen via de color picker (zie CatEditor). */
-const COLORS = [
-  "var(--blue)", "var(--orange)", "var(--pos)", "var(--cat-5)", "var(--cat-4)", "var(--cat-6)",
-  "var(--warn)", "var(--over)", "#7A6FA8", "#5AA0A8", "#8A9A5B", "var(--cat-8)",
-];
-const TYPE_LABEL: Record<CategoryType, string> = { uitgave: "Uitgave", inkomen: "Inkomen", sparen: "Sparen", overboeking: "Overboeking" };
 
 const byName = (a: Category, b: Category) => a.name.localeCompare(b.name, "nl");
 
 export function Manage() {
+  const isMobile = useMediaQuery("(max-width: 860px)");
   const [tab, setTab] = useState<"cats" | "rules">("cats");
+
+  if (isMobile) {
+    return (
+      <div className="content-inner fade-in">
+        <div className="seg seg-full" style={{ marginBottom: 14 }}>
+          <button className={tab === "cats" ? "on" : ""} onClick={() => setTab("cats")}>Categorieën</button>
+          <button className={tab === "rules" ? "on" : ""} onClick={() => setTab("rules")}>Regels</button>
+        </div>
+        {tab === "cats" ? <MobileCategories /> : <MobileRules />}
+      </div>
+    );
+  }
+
   return (
     <div className="content-inner fade-in" style={{ maxWidth: 920 }}>
       <div className="seg" style={{ marginBottom: 18 }}>
@@ -165,27 +177,6 @@ function CatRow({
   );
 }
 
-/* Palet-kiezer (gedeeld door categorie- en groep-editor). */
-function ColorPicker({ color, onChange }: { color: string; onChange: (c: string) => void }) {
-  const isCustom = !COLORS.includes(color);
-  return (
-    <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-      {COLORS.map((col) => (
-        <button key={col} onClick={() => onChange(col)} title={col}
-          style={{ width: 22, height: 22, borderRadius: "50%", background: col, border: color === col ? "2px solid var(--ink)" : "2px solid var(--surface)", boxShadow: "0 0 0 1px var(--line)", cursor: "pointer" }} />
-      ))}
-      <label title="Eigen kleur kiezen" style={{
-        position: "relative", width: 22, height: 22, borderRadius: "50%", cursor: "pointer", display: "inline-flex",
-        background: isCustom ? color : "conic-gradient(from 0deg, #e15b4c, #e0a23a, #4e8c7a, #5e81b5, #9a86be, #e15b4c)",
-        border: isCustom ? "2px solid var(--ink)" : "2px solid var(--surface)", boxShadow: "0 0 0 1px var(--line)",
-      }}>
-        <input type="color" value={isCustom ? color : "#5E81B5"} onChange={(e) => onChange(e.target.value)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", border: 0, padding: 0 }} />
-      </label>
-    </div>
-  );
-}
-
 function CatEditor({ initial, groups, defaultGroupId, onSave, onCancel }: {
   initial?: Category; groups: CategoryGroupRow[]; defaultGroupId?: string;
   onSave: (d: { name: string; color: string; type: CategoryType; groupId: string }) => void; onCancel: () => void;
@@ -247,8 +238,6 @@ function GroupEditor({ group, onSave, onCancel }: {
 }
 
 /* ── Regels ── */
-const FIELD_LABEL: Record<RuleRow["field"], string> = { rawDescription: "Omschrijving", merchant: "Naam (merchant)" };
-const MATCH_LABEL: Record<RuleRow["matchType"], string> = { contains: "bevat", regex: "regex" };
 type SortCol = "field" | "matchType" | "pattern" | "categoryId" | "priority";
 
 function RulesTab() {
@@ -356,5 +345,161 @@ function RulesTab() {
       </table>
       </div>
     </div>
+  );
+}
+
+/* ══════════════════ Mobiel ══════════════════ */
+
+/* Categorieën-tab (mobiel): groepen als secties met kaart-rijen. Verplaatsen tussen groepen
+ * kan via slepen aan de grip (usePointerDragMove, touch-geschikt) én via het Groep-veld in de
+ * bewerk-sheet. Toevoegen/bewerken via bottom-sheets. */
+function MobileCategories() {
+  const { categories, categoryGroups, transactions } = useApp();
+  const { dragCat, dropGroup, startDrag } = usePointerDragMove({ onMove: setCategoryGroup });
+  const [editCat, setEditCat] = useState<Category | null>(null);
+  const [addGroupId, setAddGroupId] = useState<string | null>(null);
+  const [groupSheet, setGroupSheet] = useState<CategoryGroupRow | null>(null);
+
+  const usage = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const t of transactions) if (t.category) m[t.category] = (m[t.category] || 0) + 1;
+    return m;
+  }, [transactions]);
+
+  const inGroup = (id: string) => categories.filter((c) => c.groupId === id).sort(byName);
+
+  return (
+    <>
+      {categoryGroups.length === 0 && <div className="card card-pad"><div className="empty">Nog geen categoriegroepen.</div></div>}
+
+      {categoryGroups.map((g) => {
+        const members = inGroup(g.id);
+        return (
+          <div key={g.id} data-group-id={g.id} className={"m-cat-group" + (dropGroup === g.id ? " drag-over" : "")}>
+            <div className="m-cat-group-h">
+              <span className="m-cat-group-name">{g.name}</span>
+              <span className="m-cat-group-count">{members.length}</span>
+              <button type="button" className="m-cat-gbtn blue" aria-label="Categorie toevoegen"
+                onClick={() => setAddGroupId(g.id)}><Ic name="plus" size={15} /></button>
+              <button type="button" className="m-cat-gbtn" aria-label="Groep bewerken"
+                onClick={() => setGroupSheet(g)}><Ic name="edit" size={14} /></button>
+            </div>
+            <div className="card m-cat-card">
+              {members.length === 0 && <div className="m-cat-empty">Sleep hier categorieën naartoe of voeg er een toe.</div>}
+              {members.map((c) => (
+                <div key={c.id} className={"m-cat-row" + (dragCat === c.id ? " dragging" : "")}>
+                  <span className="m-cat-grip" title="Sleep naar een andere groep" onPointerDown={(e) => startDrag(c.id, e)}><Ic name="grip" size={17} /></span>
+                  <button type="button" className="m-cat-rowbtn" onClick={() => setEditCat(c)}>
+                    <span className="m-cat-dot" style={{ background: c.color }} />
+                    <span className="m-cat-name">{c.name}</span>
+                    <span className="m-cat-type">{TYPE_LABEL[c.type]}</span>
+                    <span className="m-cat-count tnum">{usage[c.id] || 0}</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      <button type="button" className="m-add-dash" onClick={() => addCategoryGroup({ name: "Nieuwe groep" })}>
+        <Ic name="plus" size={17} strokeWidth={2.2} /> Nieuwe groep
+      </button>
+
+      <CatEditSheet open={!!editCat} cat={editCat} groups={categoryGroups} usage={editCat ? (usage[editCat.id] || 0) : 0} onClose={() => setEditCat(null)} />
+      <CatEditSheet open={!!addGroupId} cat={null} groups={categoryGroups} defaultGroupId={addGroupId ?? undefined} onClose={() => setAddGroupId(null)} />
+      <MobileGroupSheet group={groupSheet} groups={categoryGroups} members={groupSheet ? inGroup(groupSheet.id) : []} onClose={() => setGroupSheet(null)} />
+    </>
+  );
+}
+
+/* Groep bewerken (mobiel): naam wijzigen of de groep verwijderen (categorieën verhuizen
+ * naar een andere groep). */
+function MobileGroupSheet({ group, groups, members, onClose }: {
+  group: CategoryGroupRow | null; groups: CategoryGroupRow[]; members: Category[]; onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+  useEffect(() => { if (group) setName(group.name); }, [group]);
+  useEffect(() => {
+    if (!group) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [group, onClose]);
+  if (!group) return null;
+
+  async function save() { if (group) await updateCategoryGroup(group.id, { name: name.trim() || group.name }); onClose(); }
+  async function remove() { if (group) { await removeGroup(group, members, groups); onClose(); } }
+
+  return createPortal(
+    <div className="sheet-overlay" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Groep bewerken">
+        <div className="sheet-grip" />
+        <div className="sheet-h"><span>Groep bewerken</span>
+          <button className="sheet-x" onClick={onClose} aria-label="Sluiten"><Ic name="x" size={18} /></button>
+        </div>
+        <div className="m-field">
+          <label className="m-bud-lbl" htmlFor="m-grp-name">Naam</label>
+          <div className="m-bud-input"><input id="m-grp-name" type="text" value={name} autoFocus
+            onChange={(e) => setName(e.target.value)} style={{ fontSize: 16 }} /></div>
+        </div>
+        <button type="button" className="btn btn-primary m-sheet-cta" onClick={save}>
+          <Ic name="check" size={18} strokeWidth={2.3} /> Opslaan
+        </button>
+        <button type="button" className="m-sheet-del" onClick={remove}>
+          <Ic name="trash" size={15} /> Groep verwijderen
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/* Regels-tab (mobiel): kaart-rijen met prioriteit-badge, patroon en "veld match → categorie".
+ * Bewerken/toevoegen via een bottom-sheet. */
+function MobileRules() {
+  const { rules, catMap } = useApp();
+  const [editRule, setEditRule] = useState<RuleRow | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  const sorted = [...rules].sort((a, b) => a.priority - b.priority);
+
+  return (
+    <>
+      <div className="m-info-banner standalone">
+        <Ic name="info" size={16} />
+        <div>Een toewijzing per tegenpartij wint altijd van een regel. Lagere prioriteit wordt het eerst toegepast.</div>
+      </div>
+
+      <div className="card m-rule-card">
+        {sorted.length === 0 && <div className="m-cat-empty">Nog geen regels.</div>}
+        {sorted.map((r) => {
+          const c = catMap[r.categoryId];
+          return (
+            <button key={r.id} type="button" className="m-rule-row" onClick={() => setEditRule(r)}>
+              <span className="m-rule-prio tnum">{r.priority}</span>
+              <span className="m-rule-main">
+                <span className="m-rule-pat mono">«{r.pattern || "—"}»</span>
+                <span className="m-rule-sub">
+                  {FIELD_LABEL[r.field]} {MATCH_LABEL[r.matchType]}
+                  <span className="m-rule-arrow">→</span>
+                  <span className="m-rule-cat" style={{ background: c ? catTint(c.color) : "var(--subtle)", color: c ? c.color : "var(--muted)" }}>
+                    <span className="m-rule-catdot" style={{ background: c ? c.color : "var(--muted)" }} />{c ? c.name : "Overig"}
+                  </span>
+                </span>
+              </span>
+              <span className="m-rule-edit"><Ic name="edit" size={15} /></span>
+            </button>
+          );
+        })}
+      </div>
+
+      <button type="button" className="m-add-dash" onClick={() => setAdding(true)}>
+        <Ic name="plus" size={17} strokeWidth={2.2} /> Nieuwe regel
+      </button>
+
+      <RuleEditSheet open={!!editRule} rule={editRule} onClose={() => setEditRule(null)} />
+      <RuleEditSheet open={adding} rule={null} onClose={() => setAdding(false)} />
+    </>
   );
 }

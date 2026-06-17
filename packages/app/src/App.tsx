@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { useApp, type ViewId } from "./state/AppContext";
+import { buildPayeeOverview } from "./helpers/payees";
 import { runStartupSync } from "./sync/autoSync";
 import { initOpenWithHandlers } from "./import/incoming";
 import { Sidebar } from "./components/Sidebar";
@@ -67,8 +68,15 @@ const VIEWS: Record<ViewId, ComponentType> = {
 };
 
 export default function App() {
-  const { ready, view, setView, transactions, savingsGroups } = useApp();
+  const { ready, view, setView, transactions, savingsGroups, payeeMap, categories, categoryGroups } = useApp();
   const isMobile = useMediaQuery("(max-width: 860px)");
+
+  // Mobiele header-subtitel voor Tegenpartijen (alleen berekend wanneer dat scherm actief is).
+  const payeeStat = useMemo(() => {
+    if (view !== "tegenpartijen") return { count: 0, uncat: 0 };
+    const ov = buildPayeeOverview(transactions, payeeMap);
+    return { count: ov.length, uncat: ov.filter((p) => !p.categoryId).length };
+  }, [view, transactions, payeeMap]);
   const [confirm, setConfirm] = useState<null | "transacties" | "tegenpartijen">(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Met de herstelcode ontgrendeld (wachtwoord vergeten)? Toon — op elk scherm — direct een
@@ -118,6 +126,8 @@ export default function App() {
             sub={
               view === "transacties" ? `${transactions.length} transacties`
                 : view === "spaardoel" ? `${savingsGroups.length} categorie${savingsGroups.length === 1 ? "" : "ën"}`
+                : view === "tegenpartijen" ? `${payeeStat.count} tegenpartijen · ${payeeStat.uncat} zonder categorie`
+                : view === "beheer" ? `${categoryGroups.length} groepen · ${categories.length} categorieën`
                 : undefined
             }
             showMonth={meta.month && view !== "dashboard"}

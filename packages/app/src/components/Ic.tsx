@@ -49,6 +49,7 @@ export function Ic({ name, size = 20, className, style, strokeWidth = 1.8 }: Pro
     user: <><circle cx="12" cy="8" r="3.6" {...p} /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" {...p} /></>,
     sparkle: <><path d="M12 3v4M12 17v4M3 12h4M17 12h4" {...p} /><path d="M12 8a4 4 0 0 0 4 4 4 4 0 0 0-4 4 4 4 0 0 0-4-4 4 4 0 0 0 4-4z" {...p} fill="currentColor" /></>,
     file: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" {...p} /><path d="M14 3v5h5" {...p} /></>,
+    tag: <><path d="M3 7v4.6a2 2 0 0 0 .6 1.4l7.4 7.4a2 2 0 0 0 2.8 0l4.6-4.6a2 2 0 0 0 0-2.8L11 5.6A2 2 0 0 0 9.6 5H5a2 2 0 0 0-2 2z" {...p} /><circle cx="7.5" cy="9.5" r="1.1" fill="currentColor" stroke="none" /></>,
     filter: <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z" {...p} />,
     piggy: <><path d="M19 9V7a2 2 0 0 0-2-2h-1l-1-2-2 2H9a6 6 0 0 0-6 6 5 5 0 0 0 2 4v3h3v-2h4v2h3v-3a5 5 0 0 0 2-4z" {...p} /><circle cx="15.5" cy="11" r="1" fill="currentColor" stroke="none" /></>,
     grip: <>{[8, 12, 16].flatMap((y) => [9, 15].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.3" fill="currentColor" stroke="none" />))}</>,
