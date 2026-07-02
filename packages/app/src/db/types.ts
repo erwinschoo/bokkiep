@@ -38,6 +38,8 @@ export interface TxRow {
   importBatchId: string;
   dedupeHash: string;       // uniek; voorkomt dubbele import
   balanceCents?: number;    // saldo na deze transactie (uit ING 'Resulting balance')
+  creditorId?: string;      // SEPA-incassant-id (stabiele merchant-sleutel voor incassanten)
+  txType?: string;          // transactiesoort uit de bankexport (optioneel signaal)
 }
 
 export interface BudgetRow {
@@ -180,6 +182,23 @@ export interface HouseholdProfile {
   startBalanceCents?: number;                            // beginsaldo betaalrekening; gebruikt als de import geen banksaldo meelevert
 }
 
+/* Herkomst van een categorie-suggestie (van sterk/identiteit → zwak/heuristiek). */
+export type SuggestSource =
+  | "none"
+  | "payee-exact"    // eerder ingedeelde tegenpartij (identiteit)
+  | "creditor-id"    // zelfde SEPA-incassant als eerder (identiteit)
+  | "history-fuzzy"  // lijkt op een eerder ingedeelde tegenpartij
+  | "keyword"        // trefwoordregel
+  | "type-prior";    // afgeleid uit transactiesoort/bedrag-teken
+
+/* Voorgestelde categorie voor een tegenpartij, met betrouwbaarheid en uitleg. */
+export interface Suggestion {
+  categoryId: string;   // "" = geen suggestie
+  confidence: number;   // 0..1
+  reason: string;       // NL-uitleg voor in de UI
+  source: SuggestSource;
+}
+
 /* een geparste, nog niet opgeslagen rij uit een bankexport */
 export interface ParsedRow {
   date: string;             // ISO
@@ -188,8 +207,13 @@ export interface ParsedRow {
   amount: number;           // euro's
   counterIban: string;
   accountIban: string;
-  category: string;         // door regels herkend, "" indien onbekend
+  category: string;         // voorgevulde keuze (suggestie ≥ drempel), "" indien onbekend
+  suggestion: Suggestion;   // motor-uitkomst (voor badge/uitleg in de preview)
+  confirmed: boolean;       // door gebruiker goedgekeurd of automatisch (≥ auto-drempel)
   dedupeHash: string;
   duplicate: boolean;       // bestaat al in de DB?
   balance: number | null;   // saldo na transactie (uit ING), null indien onbekend
+  code?: string;            // ING "Code" (t.b.v. persist)
+  txType?: string;          // transactiesoort (t.b.v. persist)
+  creditorId?: string;      // SEPA-incassant-id (t.b.v. persist + incassant-match)
 }

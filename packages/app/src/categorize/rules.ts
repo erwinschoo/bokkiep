@@ -1,18 +1,27 @@
 import type { RuleRow } from "../db/types";
 import { uid } from "../lib/id";
 
-/* Pas regels toe op een transactie-achtig object. Retourneert de category id of "".
- * Regels worden op prioriteit (laag eerst) gesorteerd; eerste match wint. */
+/* Pas regels toe op een transactie-achtig object. Retourneert de eerste matchende
+ * regel (op prioriteit, laag eerst) of null. Handig als je ook het patroon nodig
+ * hebt (bv. voor een suggestie-reden). */
+export function matchRule(
+  fields: { merchant: string; rawDescription: string },
+  rules: RuleRow[],
+): RuleRow | null {
+  const sorted = [...rules].sort((a, b) => a.priority - b.priority);
+  for (const r of sorted) {
+    const hay = (r.field === "merchant" ? fields.merchant : fields.rawDescription) || "";
+    if (testRule(hay, r)) return r;
+  }
+  return null;
+}
+
+/* Pas regels toe op een transactie-achtig object. Retourneert de category id of "". */
 export function matchCategory(
   fields: { merchant: string; rawDescription: string },
   rules: RuleRow[],
 ): string {
-  const sorted = [...rules].sort((a, b) => a.priority - b.priority);
-  for (const r of sorted) {
-    const hay = (r.field === "merchant" ? fields.merchant : fields.rawDescription) || "";
-    if (testRule(hay, r)) return r.categoryId;
-  }
-  return "";
+  return matchRule(fields, rules)?.categoryId ?? "";
 }
 
 function testRule(haystack: string, r: RuleRow): boolean {

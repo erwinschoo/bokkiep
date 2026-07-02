@@ -7,6 +7,7 @@ import { parseFile } from "../import/sheetParser";
 import { onIncomingFile } from "../import/incoming";
 import { commitImport, assignPayeeCategory } from "../db/repo";
 import { payeeKey } from "../helpers/payees";
+import { CONF_SUGGEST } from "../categorize/suggest";
 import { CatTag } from "../components/CatTag";
 import { CatSelect } from "../components/CatSelect";
 import { Ic } from "../components/Ic";
@@ -24,8 +25,6 @@ export function Import() {
   const [filename, setFilename] = useState("");
   const [error, setError] = useState("");
   const [added, setAdded] = useState<number | null>(null);
-  // tegenpartijen die in de preview handmatig zijn ingedeeld → mapping opslaan bij toevoegen
-  const [manual, setManual] = useState<Map<string, { cat: string; counterIban: string; merchant: string }>>(new Map());
   const [filterUncat, setFilterUncat] = useState(true);
   const [page, setPage] = useState(0);
   const PAGE = 25;
@@ -74,44 +73,67 @@ export function Import() {
   }
 
   // Categorie in de preview wijzigen: pas toe op ALLE regels van dezelfde tegenpartij
-  // (IBAN indien aanwezig, anders winkelnaam) en onthoud de keuze als mapping.
+  // (IBAN indien aanwezig, anders winkelnaam) en markeer de tegenpartij als bevestigd.
   function changeRowCategory(row: ParsedRow, cat: string) {
     const key = payeeKey(row);
-    setRows((prev) => prev.map((x) => (payeeKey(x) === key ? { ...x, category: cat } : x)));
-    setManual((prev) => {
-      const m = new Map(prev);
-      m.set(key, { cat, counterIban: row.counterIban, merchant: row.merchant });
-      return m;
-    });
+    setRows((prev) => prev.map((x) => (payeeKey(x) === key ? { ...x, category: cat, confirmed: true } : x)));
+  }
+
+  // Voorgestelde categorie van een tegenpartij goedkeuren (één klik op de badge).
+  function approveRow(row: ParsedRow) {
+    const key = payeeKey(row);
+    setRows((prev) =>
+      prev.map((x) =>
+        payeeKey(x) === key ? { ...x, category: x.suggestion.categoryId || x.category, confirmed: true } : x,
+      ),
+    );
+  }
+
+  // Alle nog niet-bevestigde voorstellen (≥ suggestie-drempel) in één keer overnemen.
+  function approveAllSuggestions() {
+    setRows((prev) =>
+      prev.map((r) =>
+        !r.duplicate && !r.confirmed && r.suggestion.confidence >= CONF_SUGGEST
+          ? { ...r, category: r.suggestion.categoryId, confirmed: true }
+          : r,
+      ),
+    );
   }
 
   async function commit() {
     const n = await commitImport(rows, filename);
-    // bewaar mappings voor handmatig ingedeelde tegenpartijen (geldt ook voor toekomstige imports)
-    for (const { cat, counterIban, merchant } of manual.values()) {
-      await assignPayeeCategory({ counterIban, merchant }, cat);
+    // Leerlus: elke bevestigde tegenpartij (auto ≥0.9 of goedgekeurd/gewijzigd) wordt als
+    // exacte mapping bewaard, zodat een volgende import 'm meteen herkent. Reeds gekoppelde
+    // tegenpartijen (payee-exact) sla je over — die staan al in de mapping.
+    const seen = new Set<string>();
+    for (const r of rows) {
+      if (r.duplicate || !r.confirmed || !r.category || r.suggestion.source === "payee-exact") continue;
+      const key = payeeKey(r);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      await assignPayeeCategory({ counterIban: r.counterIban, merchant: r.merchant }, r.category);
     }
-    setManual(new Map());
     setAdded(n);
     setRows([]);
     setStage("idle");
   }
 
   const newRows = rows.filter((r) => !r.duplicate);
-  const autoCount = newRows.filter((r) => r.category).length;
-  const uncatCount = newRows.length - autoCount; // = resterend in te delen
+  const autoCount = newRows.filter((r) => r.confirmed).length;                    // afgehandeld (auto + goedgekeurd)
+  const suggCount = newRows.filter((r) => !r.confirmed && r.category).length;      // voorgesteld, nog te controleren
+  const uncatCount = newRows.filter((r) => !r.confirmed && !r.category).length;    // onbekend / leeg
   const dupCount = rows.length - newRows.length;
 
-  // werklijst: niet-ingedeeld (non-dup) eerst, dan ingedeeld, dan duplicaten; daarbinnen nieuwste eerst
-  const rank = (r: ParsedRow) => (r.duplicate ? 2 : r.category ? 1 : 0);
+  // werklijst: te controleren (non-dup) eerst, dan afgehandeld, dan duplicaten; daarbinnen nieuwste eerst
+  const rank = (r: ParsedRow) => (r.duplicate ? 2 : r.confirmed ? 1 : 0);
   const sorted = [...rows].sort((a, b) => rank(a) - rank(b) || (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  const filtered = filterUncat ? sorted.filter((r) => !r.duplicate && !r.category) : sorted;
+  const filtered = filterUncat ? sorted.filter((r) => !r.duplicate && !r.confirmed) : sorted;
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const cur = Math.min(page, pageCount - 1);
   const visible = filtered.slice(cur * PAGE, cur * PAGE + PAGE);
 
   function assignRestToOverig() {
-    setRows((prev) => prev.map((r) => (!r.duplicate && !r.category ? { ...r, category: "overig" } : r)));
+    setRows((prev) => prev.map((r) => (!r.duplicate && !r.confirmed && !r.category ? { ...r, category: "overig", confirmed: true } : r)));
   }
 
   return (
@@ -181,9 +203,9 @@ export function Import() {
               <div className="k-foot"><span className="delta-note">{newRows.length ? Math.round((autoCount / newRows.length) * 100) : 0}% herkend</span></div>
             </div>
             <div className="card card-pad" style={{ background: "var(--orange-tint)", borderColor: "#F1DBCB" }}>
-              <div className="k-lbl" style={{ marginBottom: 6 }}>Controle nodig</div>
-              <div className="k-val tnum" style={{ color: "var(--orange)" }}>{uncatCount}</div>
-              <div className="k-foot"><span className="delta-note">handmatig indelen</span></div>
+              <div className="k-lbl" style={{ marginBottom: 6 }}>Voorgesteld</div>
+              <div className="k-val tnum" style={{ color: "var(--orange)" }}>{suggCount}</div>
+              <div className="k-foot"><span className="delta-note">{uncatCount > 0 ? `te controleren · ${uncatCount} onbekend` : "te controleren"}</span></div>
             </div>
             <div className="card card-pad">
               <div className="k-lbl" style={{ marginBottom: 6 }}>Duplicaten</div>
@@ -202,7 +224,7 @@ export function Import() {
                 <input type="checkbox" checked={filterUncat} onChange={(e) => { setFilterUncat(e.target.checked); setPage(0); }} style={{ accentColor: "var(--blue)", width: 16, height: 16 }} />
                 Alleen controle nodig
               </label>
-              <span style={{ fontSize: 13, color: "var(--muted)" }} className="tnum">{autoCount} van {newRows.length} ingedeeld{uncatCount > 0 ? ` · ${uncatCount} te gaan` : " ✓"}</span>
+              <span style={{ fontSize: 13, color: "var(--muted)" }} className="tnum">{autoCount} van {newRows.length} afgehandeld{suggCount + uncatCount > 0 ? ` · ${suggCount + uncatCount} te controleren` : " ✓"}</span>
               {pageCount > 1 && (
                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
                   <Button variant="ghost" iconOnly icon="chevronLeft" disabled={cur === 0} onClick={() => setPage(cur - 1)} aria-label="Vorige pagina" />
@@ -220,33 +242,58 @@ export function Import() {
                   {visible.length === 0 && (
                     <tr><td colSpan={4}><div className="empty">{filterUncat ? "Alles ingedeeld ✓" : "Geen regels."}</div></td></tr>
                   )}
-                  {visible.map((r) => (
-                    <tr className="row" key={r.dedupeHash} style={r.duplicate ? { opacity: 0.5 } : !r.category ? { background: "var(--orange-tint)" } : undefined}>
+                  {visible.map((r) => {
+                    const showBadge = !r.duplicate && !r.confirmed && r.category !== "" && r.suggestion.confidence >= CONF_SUGGEST;
+                    return (
+                    <tr className="row" key={r.dedupeHash} style={r.duplicate ? { opacity: 0.5 } : !r.confirmed ? { background: "var(--orange-tint)" } : undefined}>
                       <td className="td-primary" style={{ width: "44%" }}>
                         <div className="mn">{r.merchant}{r.duplicate ? " · al aanwezig" : ""}</div>
                         <div className="md" style={{ fontFamily: "monospace", fontSize: 11.5, color: "var(--faint)" }}>{r.rawDescription.slice(0, 52)}</div>
                       </td>
                       <td className="tnum" style={{ color: "var(--muted)", fontWeight: 600 }} data-label="Datum">{fmtDate(r.date)}</td>
                       <td data-label="Categorie">
-                        {r.duplicate || r.category === "inkomen" || r.category === "sparen"
-                          ? <CatTag catId={r.category} small />
-                          : <CatSelect value={r.category} onChange={(c) => changeRowCategory(r, c)} />}
+                        {r.duplicate ? (
+                          <CatTag catId={r.category} small />
+                        ) : (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <CatSelect value={r.category} onChange={(c) => changeRowCategory(r, c)} includeIncome />
+                            {showBadge && (
+                              <button
+                                type="button"
+                                className="tag"
+                                title={r.suggestion.reason}
+                                onClick={() => approveRow(r)}
+                                style={{ cursor: "pointer", border: 0, background: "var(--blue-soft)", color: "var(--blue)", gap: 4 }}
+                              >
+                                <Ic name="check" size={13} /> voorgesteld · {Math.round(r.suggestion.confidence * 100)}%
+                              </button>
+                            )}
+                          </span>
+                        )}
                       </td>
                       <td className={"amt tnum " + (r.amount >= 0 ? "pos" : "neg")} style={{ paddingRight: 14 }} data-label="Bedrag">{eurSign(r.amount, 2)}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
             <div className="import-actions" style={{ display: "flex", gap: 12, padding: "16px 22px", borderTop: "1px solid var(--line)", alignItems: "center", flexWrap: "wrap" }}>
-              {uncatCount > 0 ? (
-                <span style={{ fontSize: 13, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <Ic name="info" size={16} /> <b>{uncatCount}</b> nog niet ingedeeld
-                  <Button variant="ghost" style={{ padding: "3px 10px", color: "var(--blue)", marginLeft: 6 }} onClick={assignRestToOverig}>Zet resterende op Overig</Button>
+              {suggCount + uncatCount > 0 ? (
+                <span style={{ fontSize: 13, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <Ic name="info" size={16} /> <b>{suggCount + uncatCount}</b> te controleren
+                  {suggCount > 0 && (
+                    <Button variant="primary" icon="check" style={{ padding: "3px 12px", marginLeft: 6 }} onClick={approveAllSuggestions}>
+                      Keur {suggCount} voorstel{suggCount === 1 ? "" : "len"} goed
+                    </Button>
+                  )}
+                  {uncatCount > 0 && (
+                    <Button variant="ghost" style={{ padding: "3px 10px", color: "var(--blue)" }} onClick={assignRestToOverig}>Zet {uncatCount} onbekend{uncatCount === 1 ? "e" : "e"} op Overig</Button>
+                  )}
                 </span>
               ) : (
                 <span style={{ fontSize: 13, color: "var(--pos)", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <Ic name="check" size={16} /> Alles ingedeeld — {newRows.length} transacties klaar
+                  <Ic name="check" size={16} /> Alles afgehandeld — {newRows.length} transacties klaar
                 </span>
               )}
               <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>

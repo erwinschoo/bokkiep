@@ -31,6 +31,17 @@ function caseToken(tok: string): string {
   return tok.charAt(0).toUpperCase() + tok.slice(1).toLowerCase();
 }
 
+/* Haalt de SEPA-incassant-identificatie (Creditor ID / Incassant ID) uit de
+ * mededeling. Dit is een stabiele merchant-sleutel die naamvarianten en losse
+ * IBAN-wijzigingen overleeft, bijv. "Creditor ID: NL47ZZZ280502160000".
+ * Leeg wanneer niet aanwezig (bv. pinbetalingen). */
+export function extractCreditorId(memo: string): string {
+  const m = (memo || "").match(
+    /(?:Creditor\s*ID|Incassant(?:\s|-)?ID|Incassant)\s*:?\s*([A-Za-z]{2}[A-Za-z0-9]{6,})/i,
+  );
+  return m ? m[1].toUpperCase() : "";
+}
+
 export function cleanMerchant(raw: string): string {
   let s = (raw || "").trim();
   for (const re of PREFIXES) s = s.replace(re, "");

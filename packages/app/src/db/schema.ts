@@ -107,6 +107,11 @@ export class FinanceDB extends Dexie {
         await catTable.update(c.id, { groupId, order, parentId: undefined });
       }
     });
+    // v6: SEPA-incassant-id op transacties bewaren (stabiele match over imports heen).
+    // Puur additief — bestaande rijen krijgen `creditorId: undefined`, geen upgrade-functie nodig.
+    this.version(6).stores({
+      transactions: "id, date, category, dedupeHash, importBatchId, counterIban, merchant, creditorId",
+    });
   }
 }
 

@@ -1,4 +1,4 @@
-import { cleanMerchant } from "./merchantClean";
+import { cleanMerchant, extractCreditorId } from "./merchantClean";
 
 /* Ruwe rij = object met header → waarde (uit SheetJS). */
 export type RawRecord = Record<string, string | number>;
@@ -11,6 +11,9 @@ export interface MappedRow {
   counterIban: string;
   accountIban: string;
   balance: number | null; // saldo na transactie (euro's), null indien niet aanwezig
+  code?: string;          // ING-kolom "Code": BA=pin, IC=incasso, GT=overboeking, …
+  txType?: string;        // "Transaction type" / "Mutatiesoort"
+  creditorId?: string;    // SEPA-incassant-id uit de mededeling (stabiele merchant-sleutel)
 }
 
 /* Mogelijke kolomnamen per veld — ING varieert soms licht. */
@@ -23,6 +26,8 @@ const COLS = {
   amount: ["Bedrag (EUR)", "Bedrag", "Amount (EUR)", "Amount"],
   memo: ["Mededelingen", "Mededeling", "Notifications"],
   balance: ["Resulting balance", "Saldo na mutatie", "Resulting Balance", "Saldo"],
+  code: ["Code"],
+  txType: ["Transaction type", "Mutatiesoort", "Transactiesoort", "Af Bij Soort"],
 };
 
 function get(rec: RawRecord, names: string[]): string {
@@ -77,5 +82,8 @@ export function mapIngRow(rec: RawRecord): MappedRow {
     counterIban: get(rec, COLS.counter),
     accountIban: get(rec, COLS.account),
     balance,
+    code: get(rec, COLS.code) || undefined,
+    txType: get(rec, COLS.txType) || undefined,
+    creditorId: extractCreditorId(memo) || undefined,
   };
 }

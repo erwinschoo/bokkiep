@@ -186,6 +186,8 @@ export async function commitImport(rows: ParsedRow[], filename: string): Promise
         importBatchId: batchId,
         dedupeHash: r.dedupeHash,
         balanceCents: r.balance != null ? toCents(r.balance) : undefined,
+        creditorId: r.creditorId || undefined,
+        txType: r.txType || undefined,
       }));
       await db.transactions.bulkPut(txs);
       await db.importBatches.put({ id: batchId, filename, importedAt: new Date().toISOString(), count: txs.length });
@@ -200,12 +202,6 @@ export async function commitImport(rows: ParsedRow[], filename: string): Promise
   });
   scheduleSync();
   return fresh.length;
-}
-
-/* Bestaande dedupe-hashes ophalen (voor duplicaatdetectie tijdens parsing). */
-export async function existingHashes(): Promise<Set<string>> {
-  const all = await db.transactions.toArray();
-  return new Set(all.map((t) => t.dedupeHash));
 }
 
 /* ── Categorie-beheer ── */
