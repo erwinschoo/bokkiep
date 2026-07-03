@@ -107,6 +107,39 @@ describe("suggestCategory", () => {
   });
 });
 
+describe("uitgebreide merchantregels", () => {
+  const cases: [string, string][] = [
+    ["Nettorama Utrecht UTRECHT NLD", "boodschappen"],
+    ["ALDI CUL012 UTRECHT UTRECHT NLD", "boodschappen"],
+    ["Kruidvat 7884 UTRECHT NLD", "gezondheid"],
+    ["ZEEMAN UTRECHT GROENEW UTRECHT", "kleding"],
+    ["Coffeeshop de Wolf Utrecht NLD", "vrijetijd"],
+    ["Esso Beesd BEESD NLD", "vervoer"],
+    ["BP DE HORNE HASKERHORNE NLD", "vervoer"],
+    ["NLOVMQJAN96BVEA567 www.ovpay.nl", "vervoer"],
+    ["Ziggo Services B.V.", "abonnementen"],
+    ["ENECO SERVICES", "wonen"],
+    ["BGHU Belastingen", "belastingen"],
+    ["ZORGVERZEKERAAR ZORG EN ZEKERHEID UA", "verzekeringen"],
+  ];
+  it.each(cases)("%s → %s", (desc, cat) => {
+    const s = suggestCategory(row({ merchant: desc, rawDescription: desc }), ctx({}));
+    expect(s.categoryId).toBe(cat);
+    expect(s.confidence).toBeGreaterThanOrEqual(CONF_SUGGEST);
+  });
+
+  it("regex-woordgrenzen voorkomen valse treffers", () => {
+    // 'SPAR' mag niet matchen op 'spaarrekening'; salaris van DELAWARE niet op 'DELA' (uitvaart).
+    const spaar = suggestCategory(row({ rawDescription: "Overboeking naar spaarrekening", merchant: "Eigen spaarrekening" }), ctx({}));
+    expect(spaar.categoryId).not.toBe("boodschappen");
+    const salaris = suggestCategory(
+      row({ merchant: "Delaware Consulting", rawDescription: "DELAWARE CONSULTING BV — SALARIS juni", amount: 3600, code: "OV", txType: "Overschrijving" }),
+      ctx({}),
+    );
+    expect(salaris.categoryId).toBe("inkomen");
+  });
+});
+
 describe("buildCreditorMap", () => {
   it("kiest de meest voorkomende categorie per incassant", () => {
     const rows: TxRow[] = [

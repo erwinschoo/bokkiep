@@ -14,12 +14,12 @@ const HEADER =
 const csv = (...rows: string[]) => [HEADER, ...rows].join("\n");
 const file = (content: string) => new File([content], "export.csv", { type: "text/csv" });
 
-// Incasso van een onbekende zorgverzekeraar; incassant-id in de mededeling.
+// Incasso van een (fictieve) onbekende incassant — geen trefwoordmatch; incassant-id in de mededeling.
 const INCASSO_MAART =
-  '"20260227";"ZORGVERZEKERAAR ZORG EN ZEKERHEID UA";"NL06INGB0008359663";"NL28INGB0000128526";"IC";"Debit";"171,65";"SEPA direct debit";"Description: Maart 2026 Creditor ID: NL47ZZZ280502160000 Recurrent SEPA direct debit";"2877,53";""';
+  '"20260227";"Muziekvereniging Concordia";"NL06INGB0008359663";"NL28INGB0000128526";"IC";"Debit";"171,65";"SEPA direct debit";"Description: Maart 2026 Creditor ID: NL47ZZZ280502160000 Recurrent SEPA direct debit";"2877,53";""';
 // Zelfde incassant, maar via een ANDERE tegenrekening (dus geen exacte IBAN-match).
 const INCASSO_APRIL =
-  '"20260430";"ZORG EN ZEKERHEID";"NL06INGB0008359663";"NL99INGB0000999999";"IC";"Debit";"171,65";"SEPA direct debit";"Description: April 2026 Creditor ID: NL47ZZZ280502160000 Recurrent SEPA direct debit";"2705,88";""';
+  '"20260430";"MV Concordia";"NL06INGB0008359663";"NL99INGB0000999999";"IC";"Debit";"171,65";"SEPA direct debit";"Description: April 2026 Creditor ID: NL47ZZZ280502160000 Recurrent SEPA direct debit";"2705,88";""';
 // Pinbetaling bij een winkel die NIET in de trefwoordregels staat.
 const SLAGERIJ_UTRECHT =
   '"20260210";"Slagerij De Vries Utrecht UTRECHT NLD";"NL06INGB0008359663";"";"BA";"Debit";"24,50";"Payment terminal";"Card sequence no.: 900";"2900,00";""';
