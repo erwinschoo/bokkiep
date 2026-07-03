@@ -78,8 +78,9 @@ export function fuzzyMatchHistory(
 }
 
 /* creditorId → categoryId uit reeds ingedeelde transacties (meest voorkomende
- * categorie per incassant). Basis voor de exacte incassant-match tijdens import. */
-export function buildCreditorMap(txRows: TxRow[]): Map<string, string> {
+ * categorie per incassant). Basis voor de exacte incassant-match tijdens import.
+ * Accepteert zowel DB-rijen (TxRow) als app-model-transacties. */
+export function buildCreditorMap(txRows: Pick<TxRow, "creditorId" | "category">[]): Map<string, string> {
   const byCred = new Map<string, Map<string, number>>();
   for (const t of txRows) {
     if (!t.creditorId || !t.category) continue;

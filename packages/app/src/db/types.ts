@@ -126,6 +126,8 @@ export interface Transaction {
   importBatchId: string;
   dedupeHash: string;
   balance?: number;          // saldo na deze transactie (euro's)
+  creditorId?: string;       // SEPA-incassant-id (indien bekend)
+  txType?: string;           // transactiesoort uit de bankexport (indien bekend)
 }
 
 export interface Goal {
